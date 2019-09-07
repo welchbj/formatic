@@ -1,0 +1,12 @@
+__pycache__
+*.py[cod]
+*.egg
+*.egg-info
+
+.mypy_cache/
+.tox/
+.vscode/
+build/
+dist/
+
+todo.txt

@@ -11,6 +11,9 @@ from functools import (
 from typing import (
     NoReturn)
 
+from .defaults import (
+    DEFAULT_INJECTION_MARKER,
+    DEFAULT_INJECTION_RESPONSE_MARKER_LEN)
 from .harnesses import (
     SubprocessInjectionHarness)
 from .injection_result import (
@@ -20,8 +23,6 @@ from .injection_walker import (
 from .version import (
     __version__)
 
-
-DEFAULT_INJECTION_MARKER = '{}'
 
 print_info = partial(print, '[*] ', sep='')
 print_err = partial(print, '[!] ', sep='', file=sys.stderr)
@@ -77,6 +78,23 @@ def get_parsed_args(
              'defaults to ' + DEFAULT_INJECTION_MARKER)
 
     parser.add_argument(
+        '-m', '--response-marker',
+        action='store',
+        required=False,
+        help='if specified, this will be used in place of a random string\n'
+             'to surround payloads sent to the target in order to ease\n'
+             'parsing of injection responses; you would only need to specify\n'
+             'this argument if your targeted application has very\n'
+             'restrictive input filters')
+
+    parser.add_argument(
+        '-l', '--random-response-marker-length',
+        action='store',
+        default=DEFAULT_INJECTION_RESPONSE_MARKER_LEN,
+        help='the length of the randomly-generated alphanumeric string that\n'
+             'will be used to extract results from injected payload responses')
+
+    parser.add_argument(
         'command',
         nargs='+',
         metavar='COMMAND',
@@ -93,9 +111,12 @@ def main(
         opts = get_parsed_args()
 
         harness = SubprocessInjectionHarness(
-            opts.injection_marker,
-            opts.command)
-        injection_walker = InjectionWalker(harness)
+            opts.command,
+            injection_marker=opts.injection_marker)
+        injection_walker = InjectionWalker(
+            harness,
+            response_marker=opts.response_marker,
+            rand_response_marker_len=opts.random_response_marker_length)
 
         print_info('Beginning enumeration of remote service...')
 

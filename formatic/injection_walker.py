@@ -1,8 +1,11 @@
 """Implementation of the InjectionWalker class."""
 
 from typing import (
+    Optional,
     Iterator)
 
+from .defaults import (
+    DEFAULT_INJECTION_RESPONSE_MARKER_LEN)
 from .harnesses import (
     AbstractInjectionHarness)
 from .injection_result import (
@@ -11,18 +14,25 @@ from .utils import (
     get_random_alnum)
 
 
-DEFAULT_RESPONSE_MARKER_LEN = 16
-
-
 class InjectionWalker:
     """Walk the vulnerable service via format() injections."""
 
     def __init__(
         self,
-        harness: AbstractInjectionHarness
+        harness: AbstractInjectionHarness,
+        response_marker: Optional[str] = None,
+        rand_response_marker_len: int = DEFAULT_INJECTION_RESPONSE_MARKER_LEN
     ) -> None:
         self._harness = harness
-        self._response_marker = get_random_alnum(DEFAULT_RESPONSE_MARKER_LEN)
+
+        if response_marker is not None:
+            self._response_marker = response_marker
+        elif rand_response_marker_len < 1:
+            raise ValueError(
+                'rand_response_marker_len must be positive integer;'
+                f'{rand_response_marker_len} is not acceptable')
+        else:
+            self._response_marker = get_random_alnum(rand_response_marker_len)
 
     def walk(
         self
@@ -35,6 +45,13 @@ class InjectionWalker:
         """
         # TODO: fuzz to get to a starting point
         # TODO: actually walk the target service
+
+        # TODO: what information are we trying to extract from the target?
+        #       - A complete understanding of objects in memory; i.e.,
+        #         extracting all of their __dict__ members
+        #       - All source code that is reachable / reversible
+        #       - Highlight any anomalous __getitem__ / __getattr__ /
+        #         __getattribute__ methods?
 
         payload = self._mark_payload('{0.__class__}')
         raw_response = self._harness.send_injection(payload)

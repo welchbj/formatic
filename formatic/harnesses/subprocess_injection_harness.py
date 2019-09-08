@@ -8,6 +8,8 @@ from typing import (
 
 from .abstract_injection_harness import (
     AbstractInjectionHarness)
+from ..defaults import (
+    DEFAULT_INJECTION_MARKER)
 
 
 class SubprocessInjectionHarness(AbstractInjectionHarness):
@@ -15,8 +17,8 @@ class SubprocessInjectionHarness(AbstractInjectionHarness):
 
     def __init__(
         self,
-        injection_marker: str,
-        args: List[str]
+        args: List[str],
+        injection_marker: str = DEFAULT_INJECTION_MARKER
     ) -> None:
         super().__init__(injection_marker)
         self._args = args
@@ -65,7 +67,7 @@ class SubprocessInjectionHarness(AbstractInjectionHarness):
         payload: str
     ) -> str:
         args = self.build_args(payload)
-        proc = run(args, stdout=PIPE)
+        proc = run(args, stdout=PIPE, stderr=PIPE)
         result = proc.stdout.decode('utf-8')
         return result
 

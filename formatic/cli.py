@@ -16,8 +16,8 @@ from .defaults import (
     DEFAULT_INJECTION_RESPONSE_MARKER_LEN)
 from .harnesses import (
     SubprocessInjectionHarness)
-from .injection_result import (
-    InjectionResult)
+from .results import (
+    AbstractInjectionResult)
 from .injection_walker import (
     InjectionWalker)
 from .version import (
@@ -78,6 +78,14 @@ def get_parsed_args(
              'defaults to ' + DEFAULT_INJECTION_MARKER)
 
     parser.add_argument(
+        '-d', '--injection-index',
+        action='store',
+        type=int,
+        default=0,
+        help='the index that is injectable in the targeted format string;\n'
+             'if omitted, the index will be fuzzed')
+
+    parser.add_argument(
         '-m', '--response-marker',
         action='store',
         required=False,
@@ -120,14 +128,13 @@ def main(
 
         print_info('Beginning enumeration of remote service...')
 
-        result: InjectionResult
-        for result in injection_walker.walk():
+        result: AbstractInjectionResult
+        for result in injection_walker.walk(opts.injection_index):
             if opts.verbose:
-                print_info('Payload ', result.payload, ' resulted in below '
-                           'response:')
-                print(result.raw_result)
+                print(result)
 
-        print_info('Completed execution')
+        print_info('Completed execution; see below for data dump')
+        print(injection_walker)
     except ValueError as e:
         print_err(e)
         return 1

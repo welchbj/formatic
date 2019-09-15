@@ -11,6 +11,15 @@ class Dummy:
         pass
 
 
+class SecretClass:
+    def __init__(self):
+        self.key = 'a-secret-key'
+
+    def get_key(self):
+        print('here is the key:')
+        print(self.key)
+
+
 def get_parsed_args():
     parser = ArgumentParser(
         prog='vulnerable_app.py',

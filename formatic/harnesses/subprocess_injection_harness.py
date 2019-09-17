@@ -4,12 +4,13 @@ from subprocess import (
     PIPE,
     run)
 from typing import (
-    List)
+    List,
+    Optional)
 
 from .abstract_injection_harness import (
     AbstractInjectionHarness)
 from ..defaults import (
-    DEFAULT_INJECTION_MARKER)
+    DEFAULT_INJECTION_RESPONSE_MARKER_LEN)
 
 
 class SubprocessInjectionHarness(AbstractInjectionHarness):
@@ -18,7 +19,9 @@ class SubprocessInjectionHarness(AbstractInjectionHarness):
     def __init__(
         self,
         args: List[str],
-        injection_marker: str = DEFAULT_INJECTION_MARKER
+        injection_marker: Optional[str] = None,
+        response_marker: Optional[str] = None,
+        rand_response_marker_len: int = DEFAULT_INJECTION_RESPONSE_MARKER_LEN
     ) -> None:
         super().__init__(injection_marker)
         self._args = args
@@ -65,10 +68,14 @@ class SubprocessInjectionHarness(AbstractInjectionHarness):
     def send_injection(
         self,
         payload: str
-    ) -> str:
+    ) -> Optional[str]:
+        payload = self._mark_payload(payload)
         args = self.build_args(payload)
+
         proc = run(args, stdout=PIPE, stderr=PIPE)
-        result = proc.stdout.decode('utf-8')
+        raw_response = proc.stdout.decode('utf-8')
+
+        result = self._parse_response(raw_response)
         return result
 
     @property

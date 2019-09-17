@@ -16,10 +16,8 @@ from .defaults import (
     DEFAULT_INJECTION_RESPONSE_MARKER_LEN)
 from .harnesses import (
     SubprocessInjectionHarness)
-from .results import (
-    AbstractInjectionResult)
-from .injection_walker import (
-    InjectionWalker)
+from .injection_engine import (
+    InjectionEngine)
 from .version import (
     __version__)
 
@@ -120,21 +118,19 @@ def main(
 
         harness = SubprocessInjectionHarness(
             opts.command,
-            injection_marker=opts.injection_marker)
-        injection_walker = InjectionWalker(
-            harness,
+            injection_marker=opts.injection_marker,
             response_marker=opts.response_marker,
             rand_response_marker_len=opts.random_response_marker_length)
+        injection_engine = InjectionEngine(harness)
 
         print_info('Beginning enumeration of remote service...')
 
-        result: AbstractInjectionResult
-        for result in injection_walker.walk(opts.injection_index):
+        for result in injection_engine.run(opts.injection_index):
             if opts.verbose:
                 print(result)
 
         print_info('Completed execution; see below for data dump')
-        print(injection_walker)
+        print(injection_engine)
     except ValueError as e:
         print_err(e)
         return 1

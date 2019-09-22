@@ -1,14 +1,32 @@
 """A simple command-line application vulnerable to format() injection."""
 
+import base64
 import sys
 
 from argparse import (
     ArgumentParser)
 
 
+class SomeClass:
+    pass
+
+
 class Dummy:
     def __init__(self):
-        pass
+        x = 100
+        self.y = x // 100
+        self.z = '1234'
+
+        s = SomeClass()
+
+        def f(x, y):
+            return 1 + 1
+
+    def test(a: str, b: int, c) -> str:
+        d = a + str(b)
+        b64 = base64.b64encode(d)
+        c = reversed(b64)
+        return str(c)
 
 
 class SecretClass:

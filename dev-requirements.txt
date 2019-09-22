@@ -1,2 +1,4 @@
 flake8
 mypy
+uncompyle6
+xdis

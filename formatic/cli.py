@@ -11,6 +11,9 @@ from functools import (
 from typing import (
     NoReturn)
 
+from xdis.magics import (
+    python_versions as supported_bytecode_versions)
+
 from .defaults import (
     DEFAULT_INJECTION_MARKER,
     DEFAULT_INJECTION_RESPONSE_MARKER_LEN)
@@ -101,6 +104,13 @@ def get_parsed_args(
              'will be used to extract results from injected payload responses')
 
     parser.add_argument(
+        '-b', '--bytecode_version',
+        action='store',
+        default='3.7',
+        choices=sorted(supported_bytecode_versions),
+        help='the Python bytecode version to use for function decompilation')
+
+    parser.add_argument(
         'command',
         nargs='+',
         metavar='COMMAND',
@@ -125,9 +135,11 @@ def main(
 
         print_info('Beginning enumeration of remote service...')
 
-        for result in injection_engine.run(opts.injection_index):
+        result_iter = injection_engine.run(
+            opts.injection_index, opts.bytecode_version)
+        for result in result_iter:
             if opts.verbose:
-                print(result)
+                print_info(result)
 
         print_info('Completed execution; see below for data dump')
         print(injection_engine)

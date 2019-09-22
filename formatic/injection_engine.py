@@ -1,6 +1,7 @@
 """Implementation of the InjectionEngine class."""
 
 from typing import (
+    Iterator,
     Optional)
 
 from .harnesses import (
@@ -20,8 +21,9 @@ class InjectionEngine:
 
     def run(
         self,
-        injectable_index: int
-    ):
+        injectable_index: int,
+        bytecode_version: str
+    ) -> Iterator[AbstractInjectionWalker]:
         """Yield results from sending injections via :data:`harness`.
 
         Note that the state of the called instance is mutating throughout the
@@ -38,12 +40,13 @@ class InjectionEngine:
 
         try:
             walker = AbstractInjectionWalker.instance_from_raw_result(
-                self._harness, format_str, response)
+                self._harness, format_str, response, bytecode_version)
         except TypeError as e:
             raise ValueError(
                 f'Unable to parse injection response: {response}') from e
 
         for walk_result in walker.walk():
+            # TODO: gracefully handle errors raised during walking
             # TODO: record the result somehow
             yield walk_result
 

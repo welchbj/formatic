@@ -28,11 +28,13 @@ class AbstractInjectionWalker(ABC):
         self,
         harness: AbstractInjectionHarness,
         injection_str: str,
-        result_str: str
+        result_str: str,
+        bytecode_version: str
     ) -> None:
         self._harness = harness
         self._injection_str = injection_str
         self._raw_result = result_str
+        self._bytecode_version = bytecode_version
 
     def __init_subclass__(
         cls,
@@ -65,12 +67,16 @@ class AbstractInjectionWalker(ABC):
     def instance_from_raw_result(
         harness: AbstractInjectionHarness,
         injection_str: str,
-        result_str: str
+        result_str: str,
+        bytecode_version: str
     ) -> Optional[AbstractInjectionWalker]:
         """Get an instance of an injection result from a response type."""
         for cls in AbstractInjectionWalker.__subclasses__():
             if re.search(cls.RE_PATTERN, result_str):
-                return cls(harness, injection_str, result_str)
+                return cls(harness,
+                           injection_str,
+                           result_str,
+                           bytecode_version)
 
         return None
 
@@ -82,7 +88,10 @@ class AbstractInjectionWalker(ABC):
         """Create a walker instance from the specified format str branch."""
         try:
             return self.__class__.instance_from_raw_result(
-                self._harness, injection_str, result_str)
+                self._harness,
+                injection_str,
+                result_str,
+                self._bytecode_version)
         except TypeError:
             return None
 
@@ -106,3 +115,10 @@ class AbstractInjectionWalker(ABC):
     ) -> Optional[str]:
         """The raw injection result returned by the target."""
         return self._raw_result
+
+    @property
+    def bytecode_version(
+        self
+    ) -> str:
+        """The Python bytecode version to use for function decompilation."""
+        return self._bytecode_version

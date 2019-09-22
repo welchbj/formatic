@@ -24,7 +24,10 @@ license = 'MIT'
 author = 'Brian Welch'
 author_email = 'welch18@vt.edu'
 url = 'https://github.com/welchbj/formatic'
-install_requires = ['TODO']
+install_requires = [
+    'uncompyle6',
+    'xdis',
+]
 
 with codecs.open(version_file, encoding='utf-8') as f:
     exec(f.read())  # loads __version__ and __version_info__

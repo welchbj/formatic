@@ -18,3 +18,8 @@ class SlotWrapperInjectionWalker(AbstractInjectionWalker):
         # TODO
         return
         yield
+
+    def __str__(
+        self
+    ) -> str:
+        return f'Injected slot wrapper with string {self._injection_str}'

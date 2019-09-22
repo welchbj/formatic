@@ -13,13 +13,13 @@ from xdis.magics import (
     py_str2float)
 
 from typing import (
-    Any,
     Iterator,
-    Optional,
-    Tuple)
+    Optional)
 
 from .abstract_injection_walker import (
     AbstractInjectionWalker)
+from .code_object_field_injection_walker import (
+    CodeObjectFieldInjectionWalker)
 from ..harnesses import (
     AbstractInjectionHarness)
 
@@ -101,38 +101,88 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
     def walk(
         self
     ) -> Iterator[AbstractInjectionWalker]:
+        yield self
+
+        co_argcount_inj_walker = self._read_co_argcount()
+        yield co_argcount_inj_walker
+
+        co_kwonlyargcount_inj_walker = self._read_co_kwonlyargcount()
+        yield co_kwonlyargcount_inj_walker
+
+        co_nlocals_inj_walker = self._read_co_nlocals()
+        yield co_nlocals_inj_walker
+
+        co_stacksize_inj_walker = self._read_co_stacksize()
+        yield co_stacksize_inj_walker
+
+        co_flags_inj_walker = self._read_co_flags()
+        yield co_flags_inj_walker
+
+        co_code_inj_walker = self._read_co_code()
+        yield co_code_inj_walker
+
+        co_consts_inj_walker: AbstractInjectionWalker
+        for walker in self._read_co_consts():
+            yield walker
+            co_consts_inj_walker = walker
+
+        co_names_inj_walker = self._read_co_names()
+        yield co_names_inj_walker
+
+        co_varnames_inj_walker = self._read_co_varnames()
+        yield co_varnames_inj_walker
+
+        co_filename_inj_walker = self._read_co_filename()
+        yield co_filename_inj_walker
+
+        co_name_inj_walker = self._read_co_name()
+        yield co_name_inj_walker
+
+        co_firstlineno_inj_walker = self._read_co_firstlineno()
+        yield co_firstlineno_inj_walker
+
+        co_lnotab_inj_walker = self._read_co_lnotab()
+        yield co_lnotab_inj_walker
+
+        co_freevars_inj_walker = self._read_co_freevars()
+        yield co_freevars_inj_walker
+
+        co_cellvars_inj_walker = self._read_co_cellvars()
+        yield co_cellvars_inj_walker
+
         self._code_obj = CodeType(
-            self._read_co_argcount(),
-            self._read_co_kwonlyargcount(),
-            self._read_co_nlocals(),
-            self._read_co_stacksize(),
-            self._read_co_flags(),
-            self._read_co_code(),
-            self._read_co_consts(),
-            self._read_co_names(),
-            self._read_co_varnames(),
-            self._read_co_filename(),
-            self._read_co_name(),
-            self._read_co_firstlineno(),
-            self._read_co_lnotab(),
-            self._read_co_freevars(),
-            self._read_co_cellvars())
+            co_argcount_inj_walker.value,
+            co_kwonlyargcount_inj_walker.value,
+            co_nlocals_inj_walker.value,
+            co_stacksize_inj_walker.value,
+            co_flags_inj_walker.value,
+            co_code_inj_walker.value,
+            co_consts_inj_walker.value,
+            co_names_inj_walker.value,
+            co_varnames_inj_walker.value,
+            co_filename_inj_walker.value,
+            co_name_inj_walker.value,
+            co_firstlineno_inj_walker.value,
+            co_lnotab_inj_walker.value,
+            co_freevars_inj_walker.value,
+            co_cellvars_inj_walker.value)
 
         bytecode_version_float = py_str2float(self._bytecode_version)
         with StringIO() as f:
             decompile(bytecode_version_float, self._code_obj, out=f)
-            f.write('\n')
             raw_decompiled_src_body = f.getvalue()
 
-        # TODO: strip comments
-        self._src_code = raw_decompiled_src_body
-
-        yield self
+        decompiled_src_body = raw_decompiled_src_body.replace(
+            '\n\n\n', '\n\n')
+        lines = [
+            line for line in decompiled_src_body.splitlines()
+            if not line.lstrip().startswith('# ')]
+        self._src_code = '\n'.join(lines)
 
     def _read_code_field(
         self,
         field_name: str,
-    ) -> Any:
+    ) -> CodeObjectFieldInjectionWalker:
         """Read a field from a ``__code__`` object.
 
         Raises:
@@ -147,45 +197,50 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
                 f'injection with string {injection_str}')
 
         parsed_result = ast.literal_eval(raw_result)
-        return parsed_result
+        return CodeObjectFieldInjectionWalker(
+            self._harness,
+            injection_str,
+            raw_result,
+            self._bytecode_version,
+            parsed_result)
 
     def _read_co_argcount(
         self
-    ) -> int:
+    ) -> CodeObjectFieldInjectionWalker:
         result = self._read_code_field('co_argcount')
-        if not isinstance(result, int):
+        if not isinstance(result.value, int):
             raise ValueError(
                 'Expected int when reading co_argcount; got '
-                f'{type(result)} instead')
+                f'{type(result.value)} instead')
 
         return result
 
     def _read_co_code(
         self
-    ) -> bytes:
+    ) -> CodeObjectFieldInjectionWalker:
         result = self._read_code_field('co_code')
-        if not isinstance(result, bytes):
+        if not isinstance(result.value, bytes):
             raise ValueError(
                 'Expected bytes when reading co_code; got '
-                f'{type(result)} instead')
+                f'{type(result.value)} instead')
 
         return result
 
     def _read_co_cellvars(
         self
-    ) -> Tuple[str]:
+    ) -> CodeObjectFieldInjectionWalker:
         result = self._read_code_field('co_cellvars')
-        if (not isinstance(result, tuple) or
-                not all(isinstance(elt, str) for elt in result)):
+        if (not isinstance(result.value, tuple) or
+                not all(isinstance(elt, str) for elt in result.value)):
             raise ValueError(
                 'Expected tuple of strings when reading co_cellvars; got '
-                f'{type(result)} instead')
+                f'{type(result.value)} instead')
 
         return result
 
     def _read_co_consts(
         self
-    ) -> Tuple[Any]:
+    ) -> Iterator[AbstractInjectionWalker]:
         parsed_elts = []
         i = 0
         while True:
@@ -195,7 +250,15 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
                 break
 
             try:
-                parsed_elts.append(ast.literal_eval(raw_elt))
+                value = ast.literal_eval(raw_elt)
+                yield CodeObjectFieldInjectionWalker(
+                    self._harness,
+                    elt_injection,
+                    raw_elt,
+                    self._bytecode_version,
+                    value)
+
+                parsed_elts.append(value)
 
                 i += 1
                 continue
@@ -210,6 +273,7 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
                     injection_str,
                     raw_elt,
                     self._bytecode_version)
+                yield code_obj_walker
                 for sub_walker in code_obj_walker.walk():
                     pass
 
@@ -225,129 +289,134 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
             raise ValueError(
                 'Got an empty tuple for co_consts; this should never happen!')
 
-        return tuple(parsed_elts)
+        yield CodeObjectFieldInjectionWalker(
+            self._harness,
+            f'{self._injection_str}.co_consts',
+            'placeholder',
+            self._bytecode_version,
+            tuple(parsed_elts))
 
     def _read_co_filename(
         self
-    ) -> str:
+    ) -> CodeObjectFieldInjectionWalker:
         result = self._read_code_field('co_filename')
-        if not isinstance(result, str):
+        if not isinstance(result.value, str):
             raise ValueError(
                 'Expected str when reading co_filename; got '
-                f'{type(result)} instead')
+                f'{type(result.value)} instead')
 
         return result
 
     def _read_co_firstlineno(
         self
-    ) -> int:
+    ) -> CodeObjectFieldInjectionWalker:
         result = self._read_code_field('co_firstlineno')
-        if not isinstance(result, int):
+        if not isinstance(result.value, int):
             raise ValueError(
                 'Expected int when reading co_firstlineno; got '
-                f'{type(result)} instead')
+                f'{type(result.value)} instead')
 
         return result
 
     def _read_co_flags(
         self
-    ) -> int:
+    ) -> CodeObjectFieldInjectionWalker:
         result = self._read_code_field('co_flags')
-        if not isinstance(result, int):
+        if not isinstance(result.value, int):
             raise ValueError(
                 'Expected int when reading co_flags; got '
-                f'{type(result)} instead')
+                f'{type(result.value)} instead')
 
         return result
 
     def _read_co_lnotab(
         self
-    ) -> bytes:
+    ) -> CodeObjectFieldInjectionWalker:
         result = self._read_code_field('co_lnotab')
-        if not isinstance(result, bytes):
+        if not isinstance(result.value, bytes):
             raise ValueError(
                 'Expected bytes when reading co_lnotab; got '
-                f'{type(result)} instead')
+                f'{type(result.value)} instead')
 
         return result
 
     def _read_co_freevars(
         self
-    ) -> Tuple[str]:
+    ) -> CodeObjectFieldInjectionWalker:
         result = self._read_code_field('co_freevars')
-        if (not isinstance(result, tuple) or
-                not all(isinstance(elt, str) for elt in result)):
+        if (not isinstance(result.value, tuple) or
+                not all(isinstance(elt, str) for elt in result.value)):
             raise ValueError(
                 'Expected tuple of strings when reading co_freevars; got '
-                f'{type(result)} instead')
+                f'{type(result.value)} instead')
 
         return result
 
     def _read_co_kwonlyargcount(
         self
-    ) -> int:
+    ) -> CodeObjectFieldInjectionWalker:
         result = self._read_code_field('co_kwonlyargcount')
-        if not isinstance(result, int):
+        if not isinstance(result.value, int):
             raise ValueError(
                 'Expected int when reading co_kwonlyargcount; got '
-                f'{type(result)} instead')
+                f'{type(result.value)} instead')
 
         return result
 
     def _read_co_name(
         self
-    ) -> str:
+    ) -> CodeObjectFieldInjectionWalker:
         result = self._read_code_field('co_name')
-        if not isinstance(result, str):
+        if not isinstance(result.value, str):
             raise ValueError(
                 'Expected str when reading co_name; got '
-                f'{type(result)} instead')
+                f'{type(result.value)} instead')
 
         return result
 
     def _read_co_names(
         self
-    ) -> Tuple[str]:
+    ) -> CodeObjectFieldInjectionWalker:
         result = self._read_code_field('co_names')
-        if (not isinstance(result, tuple) or
-                not all(isinstance(elt, str) for elt in result)):
+        if (not isinstance(result.value, tuple) or
+                not all(isinstance(elt, str) for elt in result.value)):
             raise ValueError(
                 'Expected tuple of strings when reading co_names; got '
-                f'{type(result)} instead')
+                f'{type(result.value)} instead')
 
         return result
 
     def _read_co_nlocals(
         self
-    ) -> int:
+    ) -> CodeObjectFieldInjectionWalker:
         result = self._read_code_field('co_nlocals')
-        if not isinstance(result, int):
+        if not isinstance(result.value, int):
             raise ValueError(
                 'Expected int when reading co_nlocals; got '
-                f'{type(result)} instead')
+                f'{type(result.value)} instead')
 
         return result
 
     def _read_co_stacksize(
         self
-    ) -> int:
+    ) -> CodeObjectFieldInjectionWalker:
         result = self._read_code_field('co_stacksize')
-        if not isinstance(result, int):
+        if not isinstance(result.value, int):
             raise ValueError(
                 'Expected int when reading co_stacksize; got '
-                f'{type(result)} instead')
+                f'{type(result.value)} instead')
 
         return result
 
     def _read_co_varnames(
         self
-    ) -> Tuple[str]:
+    ) -> CodeObjectFieldInjectionWalker:
         result = self._read_code_field('co_varnames')
-        if (not isinstance(result, tuple) or
-                not all(isinstance(elt, str) for elt in result)):
+        if (not isinstance(result.value, tuple) or
+                not all(isinstance(elt, str) for elt in result.value)):
             raise ValueError(
                 'Expected tuple of strings when reading co_varnames; got '
-                f'{type(result)} instead')
+                f'{type(result.value)} instead')
 
         return result
 

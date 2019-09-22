@@ -13,7 +13,7 @@ from ..harnesses import (
 class CodeObjectFieldInjectionWalker(AbstractInjectionWalker):
     """Injection walker for a field of a code object."""
 
-    RE_PATTERN: str = r'____THIS_DOES_NOT_MATTER____'
+    RE_PATTERN = None
 
     def __init__(
         self,

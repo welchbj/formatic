@@ -72,7 +72,7 @@ class AbstractInjectionWalker(ABC):
     ) -> Optional[AbstractInjectionWalker]:
         """Get an instance of an injection result from a response type."""
         for cls in AbstractInjectionWalker.__subclasses__():
-            if re.search(cls.RE_PATTERN, result_str):
+            if cls.RE_PATTERN and re.search(cls.RE_PATTERN, result_str):
                 return cls(harness,
                            injection_str,
                            result_str,

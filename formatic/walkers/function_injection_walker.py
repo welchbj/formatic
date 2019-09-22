@@ -18,14 +18,10 @@ from ..harnesses import (
     AbstractInjectionHarness)
 
 
-CODE_OBJECT_RE: str = (
-    r'<code object (?P<name>.+) at 0x[0-9a-fA-F]+, file .+, line .+>')
-
-
 class FunctionInjectionWalker(AbstractInjectionWalker):
     """Injection walker for a function.
 
-    This module will attempt to recover the source code for a function, via
+    This module will attempt to recover the source code from a function, via
     access to its ``__code__`` attribute.
 
     """
@@ -103,7 +99,6 @@ class FunctionInjectionWalker(AbstractInjectionWalker):
 
         yield self
         print(self._src_code)
-
 
     @staticmethod
     def code_obj_to_signature(

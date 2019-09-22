@@ -22,6 +22,8 @@ class Dummy:
         def f(x, y):
             return 1 + 1
 
+        f(s, 1)
+
     def test(a: str, b: int, c) -> str:
         d = a + str(b)
         b64 = base64.b64encode(d)

@@ -11,6 +11,10 @@ from functools import (
 from typing import (
     NoReturn)
 
+from colorama import (
+    Fore,
+    init as colorama_init,
+    Style)
 from xdis.magics import (
     python_versions as supported_bytecode_versions)
 
@@ -23,10 +27,14 @@ from .injection_engine import (
     InjectionEngine)
 from .version import (
     __version__)
+from .walkers import (
+    FailedInjectionWalker)
 
 
-print_info = partial(print, '[*] ', sep='')
-print_err = partial(print, '[!] ', sep='', file=sys.stderr)
+print_info = partial(print, Fore.CYAN + '[*] ' + Style.RESET_ALL, sep='')
+print_warn = partial(print, Fore.YELLOW + '[#] ' + Style.RESET_ALL, sep='')
+print_err = partial(print, Fore.RED + '[!] ' + Style.RESET_ALL, sep='',
+                    file=sys.stderr)
 
 
 class CustomArgumentParser(ArgumentParser):
@@ -110,6 +118,8 @@ def get_parsed_args(
         choices=sorted(supported_bytecode_versions),
         help='the Python bytecode version to use for function decompilation')
 
+    # TODO: support for different blacklists on the engine instance
+
     parser.add_argument(
         'command',
         nargs='+',
@@ -124,6 +134,7 @@ def get_parsed_args(
 def main(
 ) -> int:
     try:
+        colorama_init()
         opts = get_parsed_args()
 
         harness = SubprocessInjectionHarness(
@@ -135,11 +146,16 @@ def main(
 
         print_info('Beginning enumeration of remote service...')
 
-        result_iter = injection_engine.run(
+        walker_iter = injection_engine.run(
             opts.injection_index, opts.bytecode_version)
-        for result in result_iter:
+        for walker in walker_iter:
+            # TODO: add support for very verbose and do things like print
+            #       source code as it is found
             if opts.verbose:
-                print_info(result)
+                if isinstance(walker, FailedInjectionWalker):
+                    print_warn(walker)
+                else:
+                    print_info(walker)
 
         print_info('Completed execution; see below for data dump')
         print(injection_engine)

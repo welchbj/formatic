@@ -1,4 +1,6 @@
+colorama
 flake8
+flask
 mypy
 uncompyle6
 xdis

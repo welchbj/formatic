@@ -14,7 +14,8 @@ from xdis.magics import (
 
 from typing import (
     Iterator,
-    Optional)
+    Optional,
+    TYPE_CHECKING)
 
 from .abstract_injection_walker import (
     AbstractInjectionWalker)
@@ -22,6 +23,10 @@ from .code_object_field_injection_walker import (
     CodeObjectFieldInjectionWalker)
 from ..harnesses import (
     AbstractInjectionHarness)
+
+if TYPE_CHECKING:
+    from ..injection_engine import (
+        InjectionEngine)
 
 
 class CodeObjectInjectionWalker(AbstractInjectionWalker):
@@ -65,9 +70,11 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
         harness: AbstractInjectionHarness,
         injection_str: str,
         result_str: str,
-        bytecode_version: str
+        bytecode_version: str,
+        engine: 'InjectionEngine'
     ) -> None:
-        super().__init__(harness, injection_str, result_str, bytecode_version)
+        super().__init__(
+            harness, injection_str, result_str, bytecode_version, engine)
 
         self._src_code = None
         self._code_obj = None
@@ -202,6 +209,7 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
             injection_str,
             raw_result,
             self._bytecode_version,
+            self._engine,
             parsed_result)
 
     def _read_co_argcount(
@@ -256,6 +264,7 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
                     elt_injection,
                     raw_elt,
                     self._bytecode_version,
+                    self._engine,
                     value)
 
                 parsed_elts.append(value)
@@ -272,7 +281,8 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
                     self._harness,
                     injection_str,
                     raw_elt,
-                    self._bytecode_version)
+                    self._bytecode_version,
+                    self._engine)
                 yield code_obj_walker
                 for sub_walker in code_obj_walker.walk():
                     pass
@@ -294,6 +304,7 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
             f'{self._injection_str}.co_consts',
             'placeholder',
             self._bytecode_version,
+            self._engine,
             tuple(parsed_elts))
 
     def _read_co_filename(

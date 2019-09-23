@@ -8,7 +8,8 @@ from types import (
 
 from typing import (
     Iterator,
-    Optional)
+    Optional,
+    TYPE_CHECKING)
 
 from .abstract_injection_walker import (
     AbstractInjectionWalker)
@@ -16,6 +17,10 @@ from .code_object_injection_walker import (
     CodeObjectInjectionWalker)
 from ..harnesses import (
     AbstractInjectionHarness)
+
+if TYPE_CHECKING:
+    from ..injection_engine import (
+        InjectionEngine)
 
 
 class FunctionInjectionWalker(AbstractInjectionWalker):
@@ -35,9 +40,11 @@ class FunctionInjectionWalker(AbstractInjectionWalker):
         harness: AbstractInjectionHarness,
         injection_str: str,
         result_str: str,
-        bytecode_version: str
+        bytecode_version: str,
+        engine: 'InjectionEngine'
     ) -> None:
-        super().__init__(harness, injection_str, result_str, bytecode_version)
+        super().__init__(
+            harness, injection_str, result_str, bytecode_version, engine)
 
         self._code_walker = None
         self._signature = None
@@ -75,11 +82,13 @@ class FunctionInjectionWalker(AbstractInjectionWalker):
         code_obj_injection = f'{self._injection_str}.__code__'
         raw_result = self._harness.send_injection(code_obj_injection)
 
+        # TODO: this is a bad way of matching this; fix this
         walker = self.__class__.instance_from_raw_result(
             self._harness,
             code_obj_injection,
             raw_result,
-            self._bytecode_version)
+            self._bytecode_version,
+            self._engine)
 
         if not isinstance(walker, CodeObjectInjectionWalker):
             raise ValueError(
@@ -98,7 +107,6 @@ class FunctionInjectionWalker(AbstractInjectionWalker):
         self._src_code += '\n'.join(indented_src_lines)
 
         yield self
-        print(self._src_code)
 
     @staticmethod
     def code_obj_to_signature(

@@ -2,12 +2,17 @@
 
 from typing import (
     Any,
-    Iterator)
+    Iterator,
+    TYPE_CHECKING)
 
 from .abstract_injection_walker import (
     AbstractInjectionWalker)
 from ..harnesses import (
     AbstractInjectionHarness)
+
+if TYPE_CHECKING:
+    from ..injection_engine import (
+        InjectionEngine)
 
 
 class CodeObjectFieldInjectionWalker(AbstractInjectionWalker):
@@ -21,9 +26,11 @@ class CodeObjectFieldInjectionWalker(AbstractInjectionWalker):
         injection_str: str,
         result_str: str,
         bytecode_version: str,
+        engine: 'InjectionEngine',
         value: Any
     ) -> None:
-        super().__init__(harness, injection_str, result_str, bytecode_version)
+        super().__init__(
+            harness, injection_str, result_str, bytecode_version, engine)
 
         self._value = value
 

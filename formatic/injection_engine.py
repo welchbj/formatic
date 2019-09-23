@@ -1,6 +1,7 @@
 """Implementation of the InjectionEngine class."""
 
 from typing import (
+    List,
     Iterator,
     Optional)
 
@@ -18,6 +19,11 @@ class InjectionEngine:
         harness: AbstractInjectionHarness
     ) -> None:
         self._harness = harness
+
+        self._visited_module_names: List[str] = []
+        self._visited_class_names: List[str] = []
+
+        # TODO: create some state for tracking visited items
 
     def run(
         self,
@@ -40,7 +46,7 @@ class InjectionEngine:
 
         try:
             walker = AbstractInjectionWalker.instance_from_raw_result(
-                self._harness, format_str, response, bytecode_version)
+                self._harness, format_str, response, bytecode_version, self)
         except TypeError as e:
             raise ValueError(
                 f'Unable to parse injection response: {response}') from e
@@ -56,6 +62,20 @@ class InjectionEngine:
     ) -> AbstractInjectionHarness:
         """The harness used to send payloads to the vulnerable service."""
         return self._harness
+
+    @property
+    def visited_module_names(
+        self
+    ) -> List[str]:
+        """A list of the names of visited modules."""
+        return self._visited_module_names
+
+    @property
+    def visited_class_names(
+        self
+    ) -> List[str]:
+        """A list of the names of visited classes."""
+        return self._visited_class_names
 
     def __str__(
         self

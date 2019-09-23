@@ -6,12 +6,31 @@ import sys
 from argparse import (
     ArgumentParser)
 
+MODULE_LEVEL_SECRET = b'TUVWXYZ'
+
+
+def module_level_func(x, y, z):
+    print(MODULE_LEVEL_SECRET)
+    sys.exit(1)
+
 
 class SomeClass:
+    """SomeClass docstring...
+
+    on
+
+    multiple
+
+    lines
+
+    """
     pass
 
 
 class Dummy:
+    """Some documentation for the Dummy class."""
+    CLASS_ATTR = 0xdeadbeef
+
     def __init__(self):
         x = 100
         self.y = x // 100

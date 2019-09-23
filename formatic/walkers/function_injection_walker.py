@@ -82,18 +82,15 @@ class FunctionInjectionWalker(AbstractInjectionWalker):
         code_obj_injection = f'{self._injection_str}.__code__'
         raw_result = self._harness.send_injection(code_obj_injection)
 
-        # TODO: this is a bad way of matching this; fix this
-        walker = self.__class__.instance_from_raw_result(
-            self._harness,
-            code_obj_injection,
-            raw_result,
-            self._bytecode_version,
-            self._engine)
-
-        if not isinstance(walker, CodeObjectInjectionWalker):
+        walker = self.next_walker(code_obj_injection, raw_result)
+        if walker is None:
+            raise ValueError('No matching walker found for injection '
+                             f'response {raw_result}')
+        elif not isinstance(walker, CodeObjectInjectionWalker):
             raise ValueError(
                 f'Got {type(walker)} when injecting function __code__ '
                 'attribute; something is terribly wrong...')
+
         for sub_walker in walker.walk():
             yield sub_walker
         walker.assert_populated()

@@ -10,6 +10,7 @@ from abc import (
 from typing import (
     Iterator,
     Optional,
+    Type,
     TYPE_CHECKING)
 
 from ..harnesses import (
@@ -70,40 +71,33 @@ class AbstractInjectionWalker(ABC):
 
         """
 
-    @staticmethod
-    def instance_from_raw_result(
-        harness: AbstractInjectionHarness,
-        injection_str: str,
-        result_str: str,
-        bytecode_version: str,
-        engine: InjectionEngine
-    ) -> Optional[AbstractInjectionWalker]:
-        """Get an instance of an injection result from a response type."""
-        for cls in AbstractInjectionWalker.__subclasses__():
-            if cls.RE_PATTERN and re.search(cls.RE_PATTERN, result_str):
-                return cls(harness,
-                           injection_str,
-                           result_str,
-                           bytecode_version,
-                           engine)
-
-        return None
-
-    def follow_branch(
+    def next_walker(
         self,
         injection_str: str,
-        result_str: str
+        raw_result_str: str
     ) -> Optional[AbstractInjectionWalker]:
-        """Create a walker instance from the specified format str branch."""
-        try:
-            return self.__class__.instance_from_raw_result(
-                self._harness,
-                injection_str,
-                result_str,
-                self._bytecode_version,
-                self._engine)
-        except TypeError:
+        """Return a walker instance, matched from the :arg:`raw_result_str`."""
+        walker_cls = self.__class__.matching_subclass(raw_result_str)
+        if walker_cls is None:
             return None
+
+        return walker_cls(
+            self._harness,
+            injection_str,
+            raw_result_str,
+            self._bytecode_version,
+            self._engine)
+
+    @staticmethod
+    def matching_subclass(
+        text: str
+    ) -> Optional[Type[AbstractInjectionWalker]]:
+        """Get an instance of an injection result from a response type."""
+        for cls in AbstractInjectionWalker.__subclasses__():
+            if cls.RE_PATTERN and re.search(cls.RE_PATTERN, text):
+                return cls
+
+        return None
 
     @property
     def harness(

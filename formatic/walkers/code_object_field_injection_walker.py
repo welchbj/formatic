@@ -27,7 +27,7 @@ class CodeObjectFieldInjectionWalker(AbstractInjectionWalker):
         result_str: str,
         bytecode_version: str,
         engine: 'InjectionEngine',
-        value: Any
+        value: Any = None
     ) -> None:
         super().__init__(
             harness, injection_str, result_str, bytecode_version, engine)

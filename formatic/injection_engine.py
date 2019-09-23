@@ -44,12 +44,13 @@ class InjectionEngine:
                 'Unable to trigger initial injection at index '
                 f'{injectable_index}')
 
-        try:
-            walker = AbstractInjectionWalker.instance_from_raw_result(
-                self._harness, format_str, response, bytecode_version, self)
-        except TypeError as e:
+        walker_cls = AbstractInjectionWalker.matching_subclass(response)
+        if walker_cls is None:
             raise ValueError(
-                f'Unable to parse injection response: {response}') from e
+                f'Unable to parse injection response: {response}')
+
+        walker = walker_cls(
+            self._harness, format_str, response, bytecode_version, self)
 
         for walk_result in walker.walk():
             # TODO: gracefully handle errors raised during walking
@@ -63,6 +64,7 @@ class InjectionEngine:
         """The harness used to send payloads to the vulnerable service."""
         return self._harness
 
+    # TODO: should below properties be sets?
     @property
     def visited_module_names(
         self

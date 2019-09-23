@@ -46,13 +46,10 @@ class ClassInjectionWalker(AbstractInjectionWalker):
 
         yield self
 
-        # TODO: is follow_branch the way to go here?
-        #       we should know what kind of fields we are expecting to see
-        #       in a class
-
-        next_walker = self.follow_branch(init_func_injection, result)
+        next_walker = self.next_walker(init_func_injection, result)
         if next_walker is None:
-            return
+            raise ValueError(
+                f'Unable to find walker match for injection result {result}')
 
         yield from next_walker.walk()
 

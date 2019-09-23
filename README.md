@@ -2,7 +2,7 @@
 
 ## Synopsis
 
-`formatic` is a Python tool and library for automated traversal of Python [format() string](https://docs.python.org/3/library/string.html#string-formatting) injections, leaking system information of a vulnerabe service.
+`formatic` is a Python tool and library for automated traversal of Python [format() string](https://docs.python.org/3/library/string.html#string-formatting) injections, leaking system information of a vulnerable service.
 
 ## Installation
 

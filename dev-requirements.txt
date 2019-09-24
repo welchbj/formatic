@@ -2,5 +2,6 @@ colorama
 flake8
 flask
 mypy
+twine
 uncompyle6
 xdis

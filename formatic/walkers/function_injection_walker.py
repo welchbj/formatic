@@ -35,6 +35,7 @@ class FunctionInjectionWalker(AbstractInjectionWalker):
         self
     ) -> None:
         self._code_walker: Optional[CodeObjectInjectionWalker] = None
+        self._src_code: Optional[str] = None
         self._signature: Optional[str] = None
 
     @property

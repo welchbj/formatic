@@ -18,6 +18,8 @@ from .failed_injection_walker import (
     FailedInjectionWalker)
 from .function_injection_walker import (
     FunctionInjectionWalker)
+from .module_injection_walker import (
+    ModuleInjectionWalker)
 from .name_injection_walker import (
     NameInjectionWalker)
 from ..utils import (
@@ -29,7 +31,7 @@ class ClassInjectionWalker(AbstractInjectionWalker):
     """An injection walker for recovering class source code and other data."""
 
     INJECTION_RE = None
-    RESPONSE_RE = r'<class .+>'
+    RESPONSE_RE = r'^<class .+>'
 
     def __extra_init__(
         self
@@ -54,11 +56,9 @@ class ClassInjectionWalker(AbstractInjectionWalker):
         yield from self._walk_dict()
 
         self._gen_src_code()
-
         yield self
 
-        # TODO: need to escape into __globals__
-        # TODO: addition of __globals__ requires module blacklist tracking
+        yield from self._walk_globals()
 
     def _walk_name(
         self
@@ -194,7 +194,7 @@ class ClassInjectionWalker(AbstractInjectionWalker):
                     f'{injection_str}')
                 continue
 
-            snipped_injection_str = injection_str[:-2]
+            snipped_injection_str = injection_str.rstrip('!r')
             next_walker = self.next_walker(snipped_injection_str, result)
             if next_walker is None:
                 next_walker = AttributeInjectionWalker(
@@ -241,6 +241,39 @@ class ClassInjectionWalker(AbstractInjectionWalker):
         for func_walker in self._function_walkers:
             if func_walker.src_code is not None:
                 self._src_code += f'\n{indent_lines(func_walker.src_code)}\n'
+
+    def _walk_globals(
+        self
+    ) -> Iterator[AbstractInjectionWalker]:
+        """Walk the __globals__ dict, escaping into the above module."""
+        if not self._function_walkers:
+            return
+
+        # any of our function walkers should give us access to __globals__
+        func_walker: FunctionInjectionWalker = self._function_walkers[-1]
+        globals_injection_str = (
+            f'{func_walker.injection_str.rstrip("!r")}.__globals__')
+        result = self._harness.send_injection(globals_injection_str)
+        if result is None:
+            yield FailedInjectionWalker.msg(
+                'Unable to recover injection response with string '
+                f'{globals_injection_str}')
+            return
+
+        top_level_dict_keys = parse_dict_top_level_keys(result)
+        if not top_level_dict_keys:
+            yield FailedInjectionWalker.msg(
+                'Expected dump of global namespace as dict, but got '
+                f'{top_level_dict_keys} instead')
+            return
+
+        module_injection_walker = ModuleInjectionWalker(
+            self._harness,
+            globals_injection_str,
+            result,
+            self._bytecode_version,
+            self._engine)
+        yield from module_injection_walker.walk()
 
     @property
     def raw_dict_str(

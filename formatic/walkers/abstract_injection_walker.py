@@ -105,14 +105,16 @@ class AbstractInjectionWalker(ABC):
         raw_result_str: str
     ) -> Optional[AbstractInjectionWalker]:
         """Return a walker instance, matched from the :arg:`raw_result_str`."""
+        stripped_injection_str = injection_str.rstrip('!r')
+
         walker_cls = self.__class__.matching_subclass(
-            injection_str, raw_result_str)
+            stripped_injection_str, raw_result_str)
         if walker_cls is None:
             return None
 
         return walker_cls(
             self._harness,
-            injection_str,
+            stripped_injection_str,
             raw_result_str,
             self._bytecode_version,
             self._engine)

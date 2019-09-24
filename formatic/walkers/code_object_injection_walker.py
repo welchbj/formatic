@@ -209,7 +209,7 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
         parsed_result = ast.literal_eval(raw_result)
         return CodeObjectFieldInjectionWalker(
             self._harness,
-            injection_str,
+            injection_str.rstrip('!r'),
             raw_result,
             self._bytecode_version,
             self._engine,
@@ -264,7 +264,7 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
                 value = ast.literal_eval(raw_elt)
                 yield CodeObjectFieldInjectionWalker(
                     self._harness,
-                    elt_injection,
+                    elt_injection.rstrip('!r'),
                     raw_elt,
                     self._bytecode_version,
                     self._engine,

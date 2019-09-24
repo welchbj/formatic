@@ -23,6 +23,10 @@ from .name_injection_walker import (
 from ..utils import (
     parse_dict_top_level_keys)
 
+# TODO
+# TODO: We are not updating any of the blacklists in here right now...
+# TODO
+
 
 class ClassInjectionWalker(AbstractInjectionWalker):
     """An injection walker for recovering class source code and other data."""
@@ -36,8 +40,8 @@ class ClassInjectionWalker(AbstractInjectionWalker):
         super().__extra_init__()
         self._raw_dict_str: Optional[str] = None
 
-        self._docstring_walker: Optional[DocStringInjectionWalker] = None
-        self._name_walker: Optional[NameInjectionWalker] = None
+        self._docstring_walker = self.empty_instance(DocStringInjectionWalker)
+        self._name_walker = self.empty_instance(NameInjectionWalker)
         self._base_class_walkers: List[ClassInjectionWalker] = []
         self._attribute_walkers: List[AttributeInjectionWalker] = []
         self._function_walkers: List[FunctionInjectionWalker] = []
@@ -47,14 +51,16 @@ class ClassInjectionWalker(AbstractInjectionWalker):
     def walk(
         self
     ) -> Iterator[AbstractInjectionWalker]:
-        yield self
-
         yield from self._walk_name()
         yield from self._walk_doc()
         yield from self._walk_base_classes()
         yield from self._walk_dict()
 
-        # TODO: build source code
+        self._gen_src_code()
+
+        yield self
+
+        # TODO: need to escape into __globals__
 
     def _walk_name(
         self
@@ -151,6 +157,7 @@ class ClassInjectionWalker(AbstractInjectionWalker):
                 i += 1
                 continue
 
+            # TODO: is the below walk() being fully followed?
             yield from base_class_walker.walk()
             self._base_class_walkers.append(base_class_walker)
             i += 1
@@ -166,11 +173,8 @@ class ClassInjectionWalker(AbstractInjectionWalker):
         dict_injection = f'{self._injection_str}.__dict__'
         result = self._harness.send_injection(dict_injection)
         if result is None:
-            cls_name = self._namestring_walker.value
-            name_desc = (f'class {cls_name}' if cls_name is not None
-                         else 'injected class')
             yield FailedInjectionWalker.msg(
-                f'Unable to recover __dict__ from {name_desc} with '
+                'Unable to recover __dict__ from class with '
                 f'injection {dict_injection}')
             return
         self._raw_dict_str = result
@@ -204,24 +208,47 @@ class ClassInjectionWalker(AbstractInjectionWalker):
 
             yield from next_walker.walk()
 
+    def _gen_src_code(
+        self
+    ) -> None:
+        """Populate this class's :data:`src_code` attribute."""
+        cls_name = self._name_walker.value
+
+        self._src_code = 'class '
+        if cls_name is None:
+            self._src_code += '<UNKNOWN>'
+        else:
+            self._src_code += cls_name
+
+        base_cls_names = [
+            base_cls_walker.name_walker.value for
+            base_cls_walker in self._base_class_walkers if
+            base_cls_walker.name_walker is not None and
+            base_cls_walker.name_walker.value is not None]
+        self._src_code += '('
+        self._src_code += ', '.join(base_cls_names)
+        self._src_code += '):\n'
+
+        # TODO
+
     @property
     def raw_dict_str(
         self
-    ) -> str:
+    ) -> Optional[str]:
         """The raw __dict__ injection response for the injected class."""
         return self._raw_dict_str
 
     @property
     def docstring_walker(
         self
-    ) -> Optional[DocStringInjectionWalker]:
+    ) -> DocStringInjectionWalker:
         """The walker used to recover the injected class's docstring."""
         return self._docstring_walker
 
     @property
     def name_walker(
         self
-    ) -> Optional[NameInjectionWalker]:
+    ) -> NameInjectionWalker:
         """The walker used to recover the injected class's __name__."""
         return self._name_walker
 

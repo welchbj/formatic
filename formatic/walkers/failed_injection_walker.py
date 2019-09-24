@@ -15,6 +15,11 @@ class FailedInjectionWalker(AbstractInjectionWalker):
     INJECTION_RE = None
     RESPONSE_RE = None
 
+    def __extra_init__(
+        self
+    ) -> None:
+        self._reason: str = 'Injection failed for unknown reason'
+
     def walk(
         self
     ) -> Iterator[AbstractInjectionWalker]:
@@ -28,11 +33,18 @@ class FailedInjectionWalker(AbstractInjectionWalker):
     ) -> FailedInjectionWalker:
         """Get an instance with the specified message."""
         # yes, this is disgusting
-        ret = FailedInjectionWalker(None, '', '', '', None)  # typing: ignore
-        ret.msg = text
+        ret = FailedInjectionWalker(None, '', '', '', None)  # type: ignore
+        ret._reason = text
         return ret
+
+    @property
+    def reason(
+        self
+    ) -> str:
+        """Explanation of why the injection failed."""
+        return self._reason
 
     def __str__(
         self
     ) -> str:
-        return self.msg
+        return self._reason

@@ -39,7 +39,12 @@ class Dummy(SomeClass):
         s = SomeClass()
 
         def f(x, y):
-            return 1 + 1
+            def g(a, b):
+                return a + b
+
+            one = 1
+            two = 1
+            return 1 + 1 + g(one, two)
 
         f(s, 1)
 
@@ -57,6 +62,31 @@ class SecretClass:
     def get_key(self):
         print('here is the key:')
         print(self.key)
+
+
+class AtypicalClass(SomeClass, SecretClass):
+    """
+    This class has multiple inheritance, class-level attributes, and class/
+    static methods.
+    """
+
+    MY_DICT = {
+        'a': 1,
+        'b': base64.b64encode(b'12345'),
+        'c': Dummy()
+    }
+
+    MY_DUMMY = Dummy()
+
+    @staticmethod
+    def my_static_method() -> None:
+        for x in AtypicalClass.__subclasses__():
+            x.__dict__['x'] = 1337
+
+    @classmethod
+    def my_class_method(cls) -> None:
+        b = cls.__class__.__qualname__
+        print(b)
 
 
 def get_parsed_args():

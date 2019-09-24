@@ -28,7 +28,9 @@ from .injection_engine import (
 from .version import (
     __version__)
 from .walkers import (
-    FailedInjectionWalker)
+    ClassInjectionWalker,
+    FailedInjectionWalker,
+    FunctionInjectionWalker)
 
 
 print_info = partial(print, Fore.CYAN + '[*] ' + Style.RESET_ALL, sep='')
@@ -67,10 +69,10 @@ def get_parsed_args(
         formatter_class=RawTextHelpFormatter)
 
     parser.add_argument(
-        '-v', '--verbose',
-        action='store_true',
-        default=False,
-        help='print verbose information')
+        '-v', '--verbosity',
+        action='count',
+        default=0,
+        help='print verbose information (-vv prints more detail than -v)')
 
     parser.add_argument(
         '--version',
@@ -149,13 +151,21 @@ def main(
         walker_iter = injection_engine.run(
             opts.injection_index, opts.bytecode_version)
         for walker in walker_iter:
-            # TODO: add support for very verbose and do things like print
-            #       source code as it is found
-            if opts.verbose:
+            if opts.verbosity >= 1:
                 if isinstance(walker, FailedInjectionWalker):
                     print_warn(walker)
                 else:
                     print_info(walker)
+
+            if opts.verbosity >= 2:
+                if (isinstance(walker, ClassInjectionWalker) and
+                        walker.src_code is not None):
+                    print_info('Recovered class source code:')
+                    print(walker.src_code)
+                elif (isinstance(walker, FunctionInjectionWalker) and
+                        walker.src_code is not None):
+                    print_info('Recovered function source code:')
+                    print(walker.src_code)
 
         print_info('Completed execution; see below for data dump')
         print(injection_engine)

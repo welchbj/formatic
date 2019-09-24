@@ -113,8 +113,6 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
         # TODO: we are not current yielding self from within the code field
         #       walk() impl; let's look into refactoring that
 
-        yield self
-
         co_argcount_inj_walker = self._read_co_argcount()
         yield co_argcount_inj_walker
 
@@ -190,6 +188,8 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
             line for line in decompiled_src_body.splitlines()
             if not line.lstrip().startswith('# ')]
         self._src_code = '\n'.join(lines)
+
+        yield self
 
     def _read_code_field(
         self,

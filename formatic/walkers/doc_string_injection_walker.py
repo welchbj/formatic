@@ -3,13 +3,14 @@
 import ast
 
 from typing import (
-   Iterator,
-   Optional)
+   Iterator)
 
 from .abstract_injection_walker import (
     AbstractInjectionWalker)
 from .failed_injection_walker import (
     FailedInjectionWalker)
+from ..defaults import (
+    DEFAULT_UNKNOWN_DOC_STRING)
 
 
 class DocStringInjectionWalker(AbstractInjectionWalker):
@@ -23,26 +24,28 @@ class DocStringInjectionWalker(AbstractInjectionWalker):
     ) -> None:
         super().__extra_init__()
 
-        self._value: Optional[str] = None
+        self._value: str = DEFAULT_UNKNOWN_DOC_STRING
 
     @property
     def value(
         self
-    ) -> Optional[str]:
+    ) -> str:
         """The docstring recovered from the __doc__ attribute injection."""
         return self._value
 
     def walk(
         self
     ) -> Iterator[AbstractInjectionWalker]:
-        yield self
-
         try:
             self._value = ast.literal_eval(self._raw_result)
+            if not isinstance(self._value, str):
+                raise ValueError()
         except (ValueError, SyntaxError):
             yield FailedInjectionWalker.msg(
                 'Expected string literal for __doc__ but got '
                 f'{self._raw_result}')
+
+        yield self
 
     def __str__(
         self

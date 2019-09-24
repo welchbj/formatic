@@ -26,6 +26,7 @@ author_email = 'welch18@vt.edu'
 url = 'https://github.com/welchbj/formatic'
 install_requires = [
     'colorama',
+    'pygments',
     'uncompyle6',
     'xdis',
 ]

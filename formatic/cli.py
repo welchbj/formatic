@@ -15,6 +15,12 @@ from colorama import (
     Fore,
     init as colorama_init,
     Style)
+from pygments import (
+    highlight)
+from pygments.formatters import (
+    TerminalFormatter)
+from pygments.lexers import (
+    Python3Lexer)
 from xdis.magics import (
     python_versions as supported_bytecode_versions)
 
@@ -37,6 +43,13 @@ print_info = partial(print, Fore.CYAN + '[*] ' + Style.RESET_ALL, sep='')
 print_warn = partial(print, Fore.YELLOW + '[#] ' + Style.RESET_ALL, sep='')
 print_err = partial(print, Fore.RED + '[!] ' + Style.RESET_ALL, sep='',
                     file=sys.stderr)
+
+
+def print_py_src(
+    code: str
+) -> None:
+    """Print highlighted Python 3 source code to the terminal."""
+    print(highlight(code, Python3Lexer(), TerminalFormatter()))
 
 
 class CustomArgumentParser(ArgumentParser):
@@ -161,11 +174,11 @@ def main(
                 if (isinstance(walker, ClassInjectionWalker) and
                         walker.src_code is not None):
                     print_info('Recovered class source code:')
-                    print(walker.src_code)
+                    print_py_src(walker.src_code)
                 elif (isinstance(walker, FunctionInjectionWalker) and
                         walker.src_code is not None):
                     print_info('Recovered function source code:')
-                    print(walker.src_code)
+                    print_py_src(walker.src_code)
 
         print_info('Completed execution; see below for data dump')
         print(injection_engine)

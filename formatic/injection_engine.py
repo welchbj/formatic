@@ -55,12 +55,14 @@ class InjectionEngine:
             yield FailedInjectionWalker.msg(
                 'Unable to trigger initial injection at index '
                 f'{injectable_index}')
+            return
 
         walker_cls = AbstractInjectionWalker.matching_subclass(
             format_str, response)
         if walker_cls is None:
             yield FailedInjectionWalker.msg(
                 f'Unable to parse injection response: {response}')
+            return
 
         walker = walker_cls(
             self._harness, format_str, response, bytecode_version, self)

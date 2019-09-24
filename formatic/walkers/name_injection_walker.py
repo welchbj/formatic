@@ -45,10 +45,11 @@ class NameInjectionWalker(AbstractInjectionWalker):
         self
     ) -> Iterator[AbstractInjectionWalker]:
         try:
-            self._value = ast.literal_eval(self._raw_result)
-            if not isinstance(self._value, str):
+            value = ast.literal_eval(self._raw_result)
+            if not isinstance(value, str):
                 raise ValueError()
 
+            self._value = value
             self._is_default = False
         except (ValueError, SyntaxError):
             yield FailedInjectionWalker.msg(

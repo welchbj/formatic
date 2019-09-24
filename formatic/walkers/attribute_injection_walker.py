@@ -49,7 +49,8 @@ class AttributeInjectionWalker(AbstractInjectionWalker):
         except (ValueError, SyntaxError):
             yield FailedInjectionWalker.msg(
                 f'Unable to parse raw injection response {self._raw_result} '
-                'into as Python literal')
+                'as Python literal; received from string '
+                f'{self._injection_str}')
 
     def __str__(
         self

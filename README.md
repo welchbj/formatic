@@ -2,19 +2,51 @@
 
 ## Synopsis
 
-`formatic` is a Python tool and library for automated traversal of Python [format() string](https://docs.python.org/3/library/string.html#string-formatting) injections, leaking system information of a vulnerable service.
+`formatic` is a Python tool and library for automated traversal of Python [`format()` string](https://docs.python.org/3/library/string.html#string-formatting) injections, leaking system information of a vulnerable service.
 
 ## Installation
 
-TODO
+To install via pip:
+```bash
+pip install formatic
+```
 
-## Command-line Usage
+To install the latest version from source:
+```bash
+git clone https://github.com/welchbj/formatic
+cd formatic
+python setup.py
+formatic -vv -- python demo/vulnerable_cli_app.py --inject {}
+```
 
-TODO
+To install a development copy of the environment:
+```bash
+git clone https://github.com/welchbj/formatic
+cd formatic
+pip install -r dev-requirements.txt
+python -m formatic -vv -- python demo/vulnerable_cli_app.py --inject {}
+```
 
-## Library Usage
+## Usage
 
-TODO
+`formatic` is usable against Python programs that are vulnerable to `format()` string injections. A targeted application must also return the result of the format string injection to the user, so that `formatic` can process it.
+
+`formatic` comes with a builtin harness for injecting into any program that can be called from the command-line. All you have to do is specify the command as you would invoke it from the terminal, marking the injectable field with the `{}` marker.
+
+This repository contains a couple of applications that are vulnerable to `format()` string injections. To inject into a vulnerable local command-line program, try:
+```bash
+formatic -vv -- python demo/vulnerable_cli_app.py --inject {}
+```
+
+To inject into a vulnerable local web server, first run the server with:
+```bash
+python demo/vulnerable_web_app.py --port 8888
+```
+
+And then run `formatic` against it:
+```bash
+formatic -vv -- curl http://localhost:8888/inject/{}
+```
 
 ## License
 
@@ -22,7 +54,29 @@ TODO
 
 ## Development
 
-TODO
+The following linting should be performed on any committed code:
+```bash
+# pep8 compliance
+flake8 .
+
+# type checking
+mypy .
+```
+
+When it's time to cut a release:
+```bash
+# clean any old dist builds
+rm -r dist/
+
+# build source and wheel distributions
+python setup.py bdist_wheel sdist
+
+# run post-build checks
+twine check dist/*
+
+# upload to PyPI
+twine upload dist/*
+```
 
 ## References
 

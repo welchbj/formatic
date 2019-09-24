@@ -33,7 +33,8 @@ class FunctionInjectionWalker(AbstractInjectionWalker):
 
     # TODO: how are decorators handled?
 
-    RE_PATTERN: str = r'<function .+ at 0x[0-9a-fA-F]+>'
+    INJECTION_RE = None
+    RESPONSE_RE = r'<function .+ at 0x[0-9a-fA-F]+>'
 
     def __init__(
         self,
@@ -97,7 +98,8 @@ class FunctionInjectionWalker(AbstractInjectionWalker):
 
         src_lines = walker.src_code.splitlines()
         indented_src_lines = [f'   {line}' for line in src_lines]
-        # TODO: need to get docstring
+        # TODO: need to get __doc__
+        # TODO: need to get __name__
         self._signature = self.__class__.code_obj_to_signature(
             walker.code_obj)
         self._src_code = f'def {self._signature}:\n'

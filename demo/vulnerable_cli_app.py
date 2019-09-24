@@ -27,7 +27,7 @@ class SomeClass:
     pass
 
 
-class Dummy:
+class Dummy(SomeClass):
     """Some documentation for the Dummy class."""
     CLASS_ATTR = 0xdeadbeef
 

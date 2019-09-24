@@ -18,7 +18,10 @@ if TYPE_CHECKING:
 class CodeObjectFieldInjectionWalker(AbstractInjectionWalker):
     """Injection walker for a field of a code object."""
 
-    RE_PATTERN = None
+    INJECTION_RE = None
+    RESPONSE_RE = None
+
+    # TODO: remove value from __init__ and init in __extra_init__
 
     def __init__(
         self,

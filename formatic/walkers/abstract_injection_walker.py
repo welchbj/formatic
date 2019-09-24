@@ -28,7 +28,8 @@ class AbstractInjectionWalker(ABC):
 
     """
 
-    RE_PATTERN = NotImplemented
+    INJECTION_RE = NotImplemented
+    RESPONSE_RE = NotImplemented
 
     def __init__(
         self,
@@ -44,16 +45,27 @@ class AbstractInjectionWalker(ABC):
         self._bytecode_version = bytecode_version
         self._engine = engine
 
+        self.__extra_init__()
+
+    def __extra_init__(
+        self
+    ) -> None:
+        """Extra initialization logic that runs at the end of __init__()."""
+
     def __init_subclass__(
         cls,
         **kwargs
     ) -> None:
         super().__init_subclass__(**kwargs)
 
-        if cls.RE_PATTERN is NotImplemented:
+        if cls.INJECTION_RE is NotImplemented:
             raise TypeError(
                 'Descendants of AbstractInjectionResult must define the class '
-                'property RE_PATTERN')
+                'property INJECTION_RE')
+        elif cls.RESPONSE_RE is NotImplemented:
+            raise TypeError(
+                'Descendants of AbstractInjectionResult must define the class '
+                'property RESPONSE_RE')
 
     @abstractmethod
     def walk(
@@ -77,7 +89,8 @@ class AbstractInjectionWalker(ABC):
         raw_result_str: str
     ) -> Optional[AbstractInjectionWalker]:
         """Return a walker instance, matched from the :arg:`raw_result_str`."""
-        walker_cls = self.__class__.matching_subclass(raw_result_str)
+        walker_cls = self.__class__.matching_subclass(
+            injection_str, raw_result_str)
         if walker_cls is None:
             return None
 
@@ -90,11 +103,14 @@ class AbstractInjectionWalker(ABC):
 
     @staticmethod
     def matching_subclass(
-        text: str
+        injection_str: str,
+        response_str: str
     ) -> Optional[Type[AbstractInjectionWalker]]:
         """Get an instance of an injection result from a response type."""
         for cls in AbstractInjectionWalker.__subclasses__():
-            if cls.RE_PATTERN and re.search(cls.RE_PATTERN, text):
+            if cls.INJECTION_RE and re.search(cls.INJECTION_RE, injection_str):
+                return cls
+            elif cls.RESPONSE_RE and re.search(cls.RESPONSE_RE, response_str):
                 return cls
 
         return None

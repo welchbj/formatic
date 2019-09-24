@@ -10,7 +10,8 @@ from .abstract_injection_walker import (
 class SlotWrapperInjectionWalker(AbstractInjectionWalker):
     """Injection walker for a slot wrapper."""
 
-    RE_PATTERN: str = r'<slot wrapper .+>'
+    INJECTION_RE = None
+    RESPONSE_RE = r'<slot wrapper .+>'
 
     def walk(
         self

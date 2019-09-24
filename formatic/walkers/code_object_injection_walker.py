@@ -63,7 +63,8 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
 
     """
 
-    RE_PATTERN: str = r'<code object .+ at 0x[0-9a-fA-F]+, file .+, line .+>'
+    INJECTION_RE = None
+    RESPONSE_RE = r'<code object .+ at 0x[0-9a-fA-F]+, file .+, line .+>'
 
     def __init__(
         self,
@@ -93,6 +94,7 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
         """The underlying code object (if recovered)."""
         return self._code_obj
 
+    # TODO: we need to refactor usages of this into FailedInjectionWalker
     def assert_populated(
         self
     ) -> None:
@@ -108,6 +110,9 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
     def walk(
         self
     ) -> Iterator[AbstractInjectionWalker]:
+        # TODO: we are not current yielding self from within the code field
+        #       walk() impl; let's look into refactoring that
+
         yield self
 
         co_argcount_inj_walker = self._read_co_argcount()
@@ -274,7 +279,7 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
             except Exception:
                 pass
 
-            m = re.match(self.__class__.RE_PATTERN, raw_elt)
+            m = re.match(self.__class__.RESPONSE_RE, raw_elt)
             if m:
                 injection_str = elt_injection[:-2]
                 code_obj_walker = CodeObjectInjectionWalker(

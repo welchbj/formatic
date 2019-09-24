@@ -11,6 +11,7 @@ from typing import (
     Iterator,
     Optional,
     Type,
+    TypeVar,
     TYPE_CHECKING)
 
 from ..harnesses import (
@@ -19,6 +20,9 @@ from ..harnesses import (
 if TYPE_CHECKING:
     from ..injection_engine import (
         InjectionEngine)
+
+
+T = TypeVar('T', bound='AbstractInjectionWalker')
 
 
 class AbstractInjectionWalker(ABC):
@@ -56,7 +60,7 @@ class AbstractInjectionWalker(ABC):
         cls,
         **kwargs
     ) -> None:
-        super().__init_subclass__(**kwargs)
+        super().__init_subclass__(**kwargs)  # type: ignore
 
         if cls.INJECTION_RE is NotImplemented:
             raise TypeError(
@@ -82,6 +86,18 @@ class AbstractInjectionWalker(ABC):
             An iterator of other :class:`AbstractInjectionResult` instances.
 
         """
+
+    def empty_instance(
+        self,
+        cls: Type[T]
+    ) -> T:
+        """Get an empty instance of the specified type."""
+        return cls(
+            self._harness,
+            '<NONE>',
+            '<NONE>',
+            self._bytecode_version,
+            self._engine)
 
     def next_walker(
         self,

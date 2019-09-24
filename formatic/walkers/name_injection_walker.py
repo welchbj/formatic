@@ -25,6 +25,7 @@ class NameInjectionWalker(AbstractInjectionWalker):
         super().__extra_init__()
 
         self._value: str = DEFAULT_UNKNOWN_CLASS_NAME
+        self._is_default: bool = True
 
     @property
     def value(
@@ -33,6 +34,13 @@ class NameInjectionWalker(AbstractInjectionWalker):
         """The name recovered from the __name__ attribute injection."""
         return self._value
 
+    @property
+    def is_default(
+        self
+    ) -> bool:
+        """Whether this is the default class name."""
+        return self._is_default
+
     def walk(
         self
     ) -> Iterator[AbstractInjectionWalker]:
@@ -40,6 +48,8 @@ class NameInjectionWalker(AbstractInjectionWalker):
             self._value = ast.literal_eval(self._raw_result)
             if not isinstance(self._value, str):
                 raise ValueError()
+
+            self._is_default = False
         except (ValueError, SyntaxError):
             yield FailedInjectionWalker.msg(
                 'Expected string literal for __name__ but got '

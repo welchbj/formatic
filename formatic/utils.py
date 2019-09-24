@@ -28,3 +28,12 @@ def parse_dict_top_level_keys(
 ) -> List[str]:
     """Get the top level keys from a string representation of a dict."""
     return DICT_TOP_LEVEL_KEYS_RE.findall(raw_dict_str)
+
+
+def indent_lines(
+    text: str
+) -> str:
+    """Indent the lines in the specified text."""
+    lines = text.splitlines()
+    indented_lines = [f'    {line}' for line in lines]
+    return '\n'.join(indented_lines)

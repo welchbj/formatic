@@ -8,7 +8,7 @@ from typing import (
 
 from .defaults import (
     DEFAULT_ATTRIBUTE_BLACKLIST,
-    DEFAULT_BASE_CLASS_BLACKLIST)
+    DEFAULT_CLASS_BLACKLIST)
 from .harnesses import (
     AbstractInjectionHarness)
 from .walkers import (
@@ -22,11 +22,11 @@ class InjectionEngine:
         self,
         harness: AbstractInjectionHarness,
         attribute_blacklist: Sequence[str] = DEFAULT_ATTRIBUTE_BLACKLIST,
-        base_class_blacklist: Sequence[str] = DEFAULT_BASE_CLASS_BLACKLIST
+        class_blacklist: Sequence[str] = DEFAULT_CLASS_BLACKLIST
     ) -> None:
         self._harness = harness
         self._attribute_blacklist = set(attribute_blacklist)
-        self._base_class_blacklist = set(base_class_blacklist)
+        self._class_blacklist = set(class_blacklist)
 
         # TODO: other blacklists (modules, etc.)
 
@@ -66,8 +66,7 @@ class InjectionEngine:
             self._harness, format_str, response, bytecode_version, self)
 
         for walk_result in walker.walk():
-            # TODO: gracefully handle errors raised during walking
-            # TODO: record the result somehow
+            # TODO: record results
             yield walk_result
 
     @property
@@ -85,11 +84,11 @@ class InjectionEngine:
         return self._attribute_blacklist
 
     @property
-    def base_class_blacklist(
+    def class_blacklist(
         self
     ) -> Set[str]:
         """Base class names that will not be followed."""
-        return self._base_class_blacklist
+        return self._class_blacklist
 
     @property
     def visited_module_names(

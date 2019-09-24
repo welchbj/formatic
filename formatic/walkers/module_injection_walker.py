@@ -10,4 +10,6 @@ class ModuleInjectionWalker(AbstractInjectionWalker):
     INJECTION_RE = None
     RESPONSE_RE = r'<module .+>'
 
+    # TODO: handle imports of other modules
+
     # TODO

@@ -21,11 +21,8 @@ from .function_injection_walker import (
 from .name_injection_walker import (
     NameInjectionWalker)
 from ..utils import (
+    indent_lines,
     parse_dict_top_level_keys)
-
-# TODO
-# TODO: We are not updating any of the blacklists in here right now...
-# TODO
 
 
 class ClassInjectionWalker(AbstractInjectionWalker):
@@ -61,6 +58,7 @@ class ClassInjectionWalker(AbstractInjectionWalker):
         yield self
 
         # TODO: need to escape into __globals__
+        # TODO: addition of __globals__ requires module blacklist tracking
 
     def _walk_name(
         self
@@ -81,7 +79,10 @@ class ClassInjectionWalker(AbstractInjectionWalker):
             return
 
         yield from walker.walk()
+
         self._name_walker = walker
+        if not walker.is_default:
+            self._engine.class_blacklist.add(walker.value)
 
     def _walk_doc(
         self
@@ -153,11 +154,10 @@ class ClassInjectionWalker(AbstractInjectionWalker):
 
             base_class_name = base_class_name_walker.value
             if (base_class_name is None or
-                    base_class_name in self._engine.base_class_blacklist):
+                    base_class_name in self._engine.class_blacklist):
                 i += 1
                 continue
 
-            # TODO: is the below walk() being fully followed?
             yield from base_class_walker.walk()
             self._base_class_walkers.append(base_class_walker)
             i += 1
@@ -186,7 +186,7 @@ class ClassInjectionWalker(AbstractInjectionWalker):
             if key in key_blacklist:
                 continue
 
-            injection_str = f'{self._injection_str}.{key}'
+            injection_str = f'{self._injection_str}.{key}!r'
             result = self._harness.send_injection(injection_str)
             if result is None:
                 yield FailedInjectionWalker.msg(
@@ -194,19 +194,22 @@ class ClassInjectionWalker(AbstractInjectionWalker):
                     f'{injection_str}')
                 continue
 
-            next_walker = self.next_walker(injection_str, result)
+            snipped_injection_str = injection_str[:-2]
+            next_walker = self.next_walker(snipped_injection_str, result)
             if next_walker is None:
-                yield FailedInjectionWalker.msg(
-                    f'Unable to parse raw injection response {result} into '
-                    'a defined injection walker type')
-                continue
+                next_walker = AttributeInjectionWalker(
+                    self._harness,
+                    snipped_injection_str,
+                    result,
+                    self._bytecode_version,
+                    self._engine)
+
+            yield from next_walker.walk()
 
             if isinstance(next_walker, FunctionInjectionWalker):
                 self._function_walkers.append(next_walker)
             elif isinstance(next_walker, AttributeInjectionWalker):
                 self._attribute_walkers.append(next_walker)
-
-            yield from next_walker.walk()
 
     def _gen_src_code(
         self
@@ -229,7 +232,14 @@ class ClassInjectionWalker(AbstractInjectionWalker):
         self._src_code += ', '.join(base_cls_names)
         self._src_code += '):\n'
 
-        # TODO
+        doc_string = self._docstring_walker.value
+        self._src_code += f'    """{doc_string}"""\n\n'
+
+        for attr_walker in self._attribute_walkers:
+            self._src_code += f'    {attr_walker.name} = {attr_walker.value}\n'
+
+        for func_walker in self._function_walkers:
+            self._src_code += f'\n{indent_lines(func_walker.src_code)}\n'
 
     @property
     def raw_dict_str(

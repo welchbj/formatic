@@ -239,7 +239,8 @@ class ClassInjectionWalker(AbstractInjectionWalker):
             self._src_code += f'    {attr_walker.name} = {attr_walker.value}\n'
 
         for func_walker in self._function_walkers:
-            self._src_code += f'\n{indent_lines(func_walker.src_code)}\n'
+            if func_walker.src_code is not None:
+                self._src_code += f'\n{indent_lines(func_walker.src_code)}\n'
 
     @property
     def raw_dict_str(

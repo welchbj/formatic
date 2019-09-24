@@ -14,19 +14,14 @@ from xdis.magics import (
 
 from typing import (
     Iterator,
-    Optional,
-    TYPE_CHECKING)
+    Optional)
 
 from .abstract_injection_walker import (
     AbstractInjectionWalker)
 from .code_object_field_injection_walker import (
     CodeObjectFieldInjectionWalker)
-from ..harnesses import (
-    AbstractInjectionHarness)
-
-if TYPE_CHECKING:
-    from ..injection_engine import (
-        InjectionEngine)
+from .failed_injection_walker import (
+    FailedInjectionWalker)
 
 
 class CodeObjectInjectionWalker(AbstractInjectionWalker):
@@ -66,19 +61,13 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
     INJECTION_RE = None
     RESPONSE_RE = r'<code object .+ at 0x[0-9a-fA-F]+, file .+, line .+>'
 
-    def __init__(
-        self,
-        harness: AbstractInjectionHarness,
-        injection_str: str,
-        result_str: str,
-        bytecode_version: str,
-        engine: 'InjectionEngine'
+    def __extra_init__(
+        self
     ) -> None:
-        super().__init__(
-            harness, injection_str, result_str, bytecode_version, engine)
+        return super().__extra_init__()
 
-        self._src_code = None
-        self._code_obj = None
+        self._src_code: Optional[str] = None
+        self._code_obj: Optional[CodeType] = None
 
     @property
     def src_code(
@@ -135,6 +124,12 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
         for walker in self._read_co_consts():
             yield walker
             co_consts_inj_walker = walker
+        if not isinstance(co_consts_inj_walker,
+                          CodeObjectFieldInjectionWalker):
+            yield FailedInjectionWalker.msg(
+                f'Received unexpected type {type(co_consts_inj_walker)} when '
+                'expecting a field injection walker')
+            return
 
         co_names_inj_walker = self._read_co_names()
         yield co_names_inj_walker

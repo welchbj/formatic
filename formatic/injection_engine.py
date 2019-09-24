@@ -3,7 +3,6 @@
 from typing import (
     Iterator,
     Optional,
-    Sequence,
     Set)
 
 from .defaults import (
@@ -21,8 +20,8 @@ class InjectionEngine:
     def __init__(
         self,
         harness: AbstractInjectionHarness,
-        attribute_blacklist: Sequence[str] = DEFAULT_ATTRIBUTE_BLACKLIST,
-        class_blacklist: Sequence[str] = DEFAULT_CLASS_BLACKLIST
+        attribute_blacklist: Set[str] = DEFAULT_ATTRIBUTE_BLACKLIST,
+        class_blacklist: Set[str] = DEFAULT_CLASS_BLACKLIST
     ) -> None:
         self._harness = harness
         self._attribute_blacklist = set(attribute_blacklist)

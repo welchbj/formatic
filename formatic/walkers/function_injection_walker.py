@@ -8,19 +8,14 @@ from types import (
 
 from typing import (
     Iterator,
-    Optional,
-    TYPE_CHECKING)
+    Optional)
 
 from .abstract_injection_walker import (
     AbstractInjectionWalker)
 from .code_object_injection_walker import (
     CodeObjectInjectionWalker)
-from ..harnesses import (
-    AbstractInjectionHarness)
-
-if TYPE_CHECKING:
-    from ..injection_engine import (
-        InjectionEngine)
+from .failed_injection_walker import (
+    FailedInjectionWalker)
 
 
 class FunctionInjectionWalker(AbstractInjectionWalker):
@@ -36,22 +31,14 @@ class FunctionInjectionWalker(AbstractInjectionWalker):
     INJECTION_RE = None
     RESPONSE_RE = r'<function .+ at 0x[0-9a-fA-F]+>'
 
-    def __init__(
-        self,
-        harness: AbstractInjectionHarness,
-        injection_str: str,
-        result_str: str,
-        bytecode_version: str,
-        engine: 'InjectionEngine'
+    def __extra_init__(
+        self
     ) -> None:
-        super().__init__(
-            harness, injection_str, result_str, bytecode_version, engine)
-
-        self._code_walker = None
-        self._signature = None
+        self._code_walker: Optional[CodeObjectInjectionWalker] = None
+        self._signature: Optional[str] = None
 
     @property
-    def code_obj(
+    def code_walker(
         self
     ) -> Optional[CodeObjectInjectionWalker]:
         """The code object that this walker recovered from the target.
@@ -82,21 +69,35 @@ class FunctionInjectionWalker(AbstractInjectionWalker):
     ) -> Iterator[AbstractInjectionWalker]:
         code_obj_injection = f'{self._injection_str}.__code__'
         raw_result = self._harness.send_injection(code_obj_injection)
+        if raw_result is None:
+            yield FailedInjectionWalker.msg(
+                'Unable to recover injection response from string '
+                f'{raw_result}')
+            return
 
         walker = self.next_walker(code_obj_injection, raw_result)
         if walker is None:
-            raise ValueError('No matching walker found for injection '
-                             f'response {raw_result}')
+            yield FailedInjectionWalker.msg(
+                'No matching walker found for injection response '
+                f'{raw_result}')
+            return
         elif not isinstance(walker, CodeObjectInjectionWalker):
-            raise ValueError(
+            yield FailedInjectionWalker.msg(
                 f'Got {type(walker)} when injecting function __code__ '
                 'attribute; something is terribly wrong...')
+            return
 
         for sub_walker in walker.walk():
             yield sub_walker
-        walker.assert_populated()
 
-        src_lines = walker.src_code.splitlines()
+        if walker.code_obj is None or walker.src_code is None:
+            yield FailedInjectionWalker.msg(
+                'Unable to successfully recover code object from string '
+                f'{walker.injection_str}')
+            return
+
+        src_lines = ([] if walker.src_code is None else
+                     walker.src_code.splitlines())
         indented_src_lines = [f'   {line}' for line in src_lines]
         # TODO: need to get __doc__
         # TODO: need to get __name__

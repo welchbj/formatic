@@ -128,8 +128,8 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
             if not isinstance(co_consts_inj_walker,
                               CodeObjectFieldInjectionWalker):
                 yield FailedInjectionWalker.msg(
-                    f'Received unexpected type {type(co_consts_inj_walker)} when '
-                    'expecting a field injection walker')
+                    f'Received unexpected type {type(co_consts_inj_walker)} '
+                    'when expecting a field injection walker')
                 return
 
             co_names_inj_walker = self._read_co_names()

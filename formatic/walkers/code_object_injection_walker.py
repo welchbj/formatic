@@ -102,58 +102,61 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
         # TODO: we are not current yielding self from within the code field
         #       walk() impl; let's look into refactoring that
 
-        co_argcount_inj_walker = self._read_co_argcount()
-        yield co_argcount_inj_walker
+        try:
+            co_argcount_inj_walker = self._read_co_argcount()
+            yield co_argcount_inj_walker
 
-        co_kwonlyargcount_inj_walker = self._read_co_kwonlyargcount()
-        yield co_kwonlyargcount_inj_walker
+            co_kwonlyargcount_inj_walker = self._read_co_kwonlyargcount()
+            yield co_kwonlyargcount_inj_walker
 
-        co_nlocals_inj_walker = self._read_co_nlocals()
-        yield co_nlocals_inj_walker
+            co_nlocals_inj_walker = self._read_co_nlocals()
+            yield co_nlocals_inj_walker
 
-        co_stacksize_inj_walker = self._read_co_stacksize()
-        yield co_stacksize_inj_walker
+            co_stacksize_inj_walker = self._read_co_stacksize()
+            yield co_stacksize_inj_walker
 
-        co_flags_inj_walker = self._read_co_flags()
-        yield co_flags_inj_walker
+            co_flags_inj_walker = self._read_co_flags()
+            yield co_flags_inj_walker
 
-        co_code_inj_walker = self._read_co_code()
-        yield co_code_inj_walker
+            co_code_inj_walker = self._read_co_code()
+            yield co_code_inj_walker
 
-        co_consts_inj_walker: AbstractInjectionWalker
-        for walker in self._read_co_consts():
-            yield walker
-            co_consts_inj_walker = walker
-        if not isinstance(co_consts_inj_walker,
-                          CodeObjectFieldInjectionWalker):
-            yield FailedInjectionWalker.msg(
-                f'Received unexpected type {type(co_consts_inj_walker)} when '
-                'expecting a field injection walker')
-            return
+            co_consts_inj_walker: AbstractInjectionWalker
+            for walker in self._read_co_consts():
+                yield walker
+                co_consts_inj_walker = walker
+            if not isinstance(co_consts_inj_walker,
+                              CodeObjectFieldInjectionWalker):
+                yield FailedInjectionWalker.msg(
+                    f'Received unexpected type {type(co_consts_inj_walker)} when '
+                    'expecting a field injection walker')
+                return
 
-        co_names_inj_walker = self._read_co_names()
-        yield co_names_inj_walker
+            co_names_inj_walker = self._read_co_names()
+            yield co_names_inj_walker
 
-        co_varnames_inj_walker = self._read_co_varnames()
-        yield co_varnames_inj_walker
+            co_varnames_inj_walker = self._read_co_varnames()
+            yield co_varnames_inj_walker
 
-        co_filename_inj_walker = self._read_co_filename()
-        yield co_filename_inj_walker
+            co_filename_inj_walker = self._read_co_filename()
+            yield co_filename_inj_walker
 
-        co_name_inj_walker = self._read_co_name()
-        yield co_name_inj_walker
+            co_name_inj_walker = self._read_co_name()
+            yield co_name_inj_walker
 
-        co_firstlineno_inj_walker = self._read_co_firstlineno()
-        yield co_firstlineno_inj_walker
+            co_firstlineno_inj_walker = self._read_co_firstlineno()
+            yield co_firstlineno_inj_walker
 
-        co_lnotab_inj_walker = self._read_co_lnotab()
-        yield co_lnotab_inj_walker
+            co_lnotab_inj_walker = self._read_co_lnotab()
+            yield co_lnotab_inj_walker
 
-        co_freevars_inj_walker = self._read_co_freevars()
-        yield co_freevars_inj_walker
+            co_freevars_inj_walker = self._read_co_freevars()
+            yield co_freevars_inj_walker
 
-        co_cellvars_inj_walker = self._read_co_cellvars()
-        yield co_cellvars_inj_walker
+            co_cellvars_inj_walker = self._read_co_cellvars()
+            yield co_cellvars_inj_walker
+        except ValueError as e:
+            yield FailedInjectionWalker.msg(str(e))
 
         self._code_obj = CodeType(
             co_argcount_inj_walker.value,

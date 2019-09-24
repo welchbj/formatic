@@ -11,7 +11,8 @@ from .defaults import (
 from .harnesses import (
     AbstractInjectionHarness)
 from .walkers import (
-    AbstractInjectionWalker)
+    AbstractInjectionWalker,
+    FailedInjectionWalker)
 
 
 class InjectionEngine:
@@ -51,14 +52,14 @@ class InjectionEngine:
 
         response: Optional[str] = self._harness.send_injection(format_str)
         if not response:
-            raise ValueError(
+            yield FailedInjectionWalker.msg(
                 'Unable to trigger initial injection at index '
                 f'{injectable_index}')
 
         walker_cls = AbstractInjectionWalker.matching_subclass(
             format_str, response)
         if walker_cls is None:
-            raise ValueError(
+            yield FailedInjectionWalker.msg(
                 f'Unable to parse injection response: {response}')
 
         walker = walker_cls(

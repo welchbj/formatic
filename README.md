@@ -16,7 +16,6 @@ To install the latest version from source:
 git clone https://github.com/welchbj/formatic
 cd formatic
 python setup.py
-formatic -vv -- python demo/vulnerable_cli_app.py --inject {}
 ```
 
 To install a development copy of the environment:
@@ -24,7 +23,6 @@ To install a development copy of the environment:
 git clone https://github.com/welchbj/formatic
 cd formatic
 pip install -r dev-requirements.txt
-python -m formatic -vv -- python demo/vulnerable_cli_app.py --inject {}
 ```
 
 ## Usage

@@ -1,4 +1,8 @@
-# formatic
+<p align="center">
+  <img width="345" height="80" src="static/logo.png" alt="formatic">
+</p>
+
+---
 
 ## Synopsis
 
@@ -38,12 +42,12 @@ formatic -vv -- python demo/vulnerable_cli_app.py --inject {}
 
 To inject into a vulnerable local web server, first run the server with:
 ```bash
-python demo/vulnerable_web_app.py --port 8888
+python demo/vulnerable_web_app.py 8888
 ```
 
 And then run `formatic` against it:
 ```bash
-formatic -vv -- curl http://localhost:8888/inject/{}
+formatic -vv -- curl -g http://localhost:8888/inject/{}
 ```
 
 ## License

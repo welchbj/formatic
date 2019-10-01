@@ -33,11 +33,11 @@ pip install -r dev-requirements.txt
 
 `formatic` is usable against Python programs that are vulnerable to `format()` string injections. A targeted application must also return the result of the format string injection to the user, so that `formatic` can process it.
 
-`formatic` comes with a builtin harness for injecting into any program that can be called from the command-line. All you have to do is specify the command as you would invoke it from the terminal, marking the injectable field with the `{}` marker.
+`formatic` comes with a builtin harness for injecting into any program that can be called from the command-line. All you have to do is specify the command as you would invoke it from the terminal, marking the injectable field with the `@@` marker.
 
 This repository contains a couple of applications that are vulnerable to `format()` string injections. To inject into a vulnerable local command-line program, try:
 ```bash
-formatic -vv -- python demo/vulnerable_cli_app.py --inject {}
+formatic -vv -- python demo/vulnerable_cli_app.py --inject @@
 ```
 
 To inject into a vulnerable local web server, first run the server with:
@@ -47,7 +47,7 @@ python demo/vulnerable_web_app.py 8888
 
 And then run `formatic` against it:
 ```bash
-formatic -vv -- curl -g http://localhost:8888/inject/{}
+formatic -vv -- curl -g http://localhost:8888/inject/@@
 ```
 
 ## License

@@ -16,7 +16,7 @@ from ..defaults import (
 class NameInjectionWalker(AbstractInjectionWalker):
     """An injection walker for recovering ``__name__`` strings."""
 
-    INJECTION_RE = r'.*\[?(__name__|__module__)\]?(!(s|a|r))?$'
+    INJECTION_RE = r'.*\[?(__name__|__qualname__|__module__)\]?(!(s|a|r))?$'
     RESPONSE_RE = None
 
     def __extra_init__(

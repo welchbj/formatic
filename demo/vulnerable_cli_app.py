@@ -32,6 +32,7 @@ class Dummy(SomeClass):
     CLASS_ATTR = 0xdeadbeef
 
     def __init__(self):
+        """Docstring for init-ing a DummyClass instance."""
         x = 100
         self.y = x // 100
         self.z = '1234'

@@ -92,7 +92,6 @@ class ClassInjectionWalker(AbstractInjectionWalker):
             return
 
         yield from walker.walk()
-
         self._name_walker = walker
 
     def _walk_module_name(
@@ -275,7 +274,8 @@ class ClassInjectionWalker(AbstractInjectionWalker):
         self._src_code += '):\n'
 
         doc_string = self._docstring_walker.value
-        self._src_code += f'    """{doc_string}"""\n\n'
+        if doc_string:
+            self._src_code += f'    """{doc_string}"""\n\n'
 
         for attr_walker in self._attribute_walkers:
             self._src_code += f'    {attr_walker.name} = {attr_walker.value}\n'

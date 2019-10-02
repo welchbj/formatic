@@ -17,6 +17,7 @@ DEFAULT_ATTRIBUTE_BLACKLIST: Set[str] = {
 DEFAULT_CLASS_BLACKLIST: Set[str] = {
     'object',
 }
+DEFAULT_FUNCTION_BLACKLIST: Set[str] = set()
 DEFAULT_MODULE_BLACKLIST: Set[str] = {
     '__future__',
     '_dummy_thread',

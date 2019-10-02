@@ -75,16 +75,16 @@ class ModuleInjectionWalker(AbstractInjectionWalker):
                     f'{key_injection_str}')
                 continue
 
-            # TODO: need a function blacklist, too
             next_walker = self.next_walker(key_injection_str, result)
             if next_walker is not None:
+                yield from next_walker.walk()
+
                 from .class_injection_walker import ClassInjectionWalker  # noqa
                 if isinstance(next_walker, ClassInjectionWalker):
                     self._class_walkers.append(next_walker)
                 elif isinstance(next_walker, FunctionInjectionWalker):
                     self._function_walkers.append(next_walker)
 
-                yield from next_walker.walk()
             elif re.search(MODULE_RE, result):
                 mod_dict_injection_str = (
                     f'{key_injection_str.rstrip("!r")}.__dict__')
@@ -165,7 +165,10 @@ class ModuleInjectionWalker(AbstractInjectionWalker):
         self
     ) -> None:
         """Populate this class's :data:`src_code` property."""
-        self._src_code = f'"""{self._docstring_walker.value}"""\n\n'
+        self._src_code = ''
+        if not self._docstring_walker.is_default:
+            self._src_code = f'"""{self._docstring_walker.value}"""\n\n'
+
         self._src_code += '<OMITTED IMPORTS>\n\n\n'
 
         self._src_code += '\n'.join(

@@ -9,6 +9,7 @@ from typing import (
 from .defaults import (
     DEFAULT_ATTRIBUTE_BLACKLIST,
     DEFAULT_CLASS_BLACKLIST,
+    DEFAULT_FUNCTION_BLACKLIST,
     DEFAULT_MODULE_BLACKLIST)
 from .harnesses import (
     AbstractInjectionHarness)
@@ -25,6 +26,7 @@ class InjectionEngine:
         self,
         harness: AbstractInjectionHarness,
         attribute_blacklist: Set[str] = DEFAULT_ATTRIBUTE_BLACKLIST,
+        function_blacklist: Set[str] = DEFAULT_FUNCTION_BLACKLIST,
         class_blacklist: Set[str] = DEFAULT_CLASS_BLACKLIST,
         module_blacklist: Set[str] = DEFAULT_MODULE_BLACKLIST
     ) -> None:
@@ -32,6 +34,7 @@ class InjectionEngine:
         self._attribute_blacklist: Set[str] = set(attribute_blacklist)
         self._class_blacklist: Set[str] = set(class_blacklist)
         self._module_blacklist: Set[str] = set(module_blacklist)
+        self._function_blacklist: Set[str] = set(function_blacklist)
 
         self._visited_module_walkers: List[AbstractInjectionWalker] = []
 
@@ -97,6 +100,13 @@ class InjectionEngine:
     ) -> Set[str]:
         """Module names that will not be followed."""
         return self._module_blacklist
+
+    @property
+    def function_blacklist(
+        self
+    ) -> Set[str]:
+        """Function names (qualified by module name) to not follow."""
+        return self._function_blacklist
 
     @property
     def visited_module_walkers(

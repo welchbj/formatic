@@ -48,7 +48,7 @@ class Dummy(SomeClass):
 
         f(s, 1)
 
-    def test(a: str, b: int, c) -> str:
+    def test(self, a: str, b: int, c) -> str:
         d = a + str(b)
         b64 = base64.b64encode(d)
         c = reversed(b64)

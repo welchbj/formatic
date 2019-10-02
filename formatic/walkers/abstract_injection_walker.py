@@ -26,11 +26,7 @@ T = TypeVar('T', bound='AbstractInjectionWalker')
 
 
 class AbstractInjectionWalker(ABC):
-    """Recursive classes to walk all injection branches of a target.
-
-    TODO
-
-    """
+    """Recursive classes to walk all injection branches of a target."""
 
     INJECTION_RE = NotImplemented
     RESPONSE_RE = NotImplemented

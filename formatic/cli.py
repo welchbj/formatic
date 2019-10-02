@@ -133,8 +133,6 @@ def get_parsed_args(
         choices=sorted(supported_bytecode_versions),
         help='the Python bytecode version to use for function decompilation')
 
-    # TODO: support for different blacklists on the engine instance
-
     parser.add_argument(
         'command',
         nargs='+',

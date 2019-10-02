@@ -41,6 +41,8 @@ class ClassInjectionWalker(AbstractInjectionWalker):
 
         self._docstring_walker = self.empty_instance(DocStringInjectionWalker)
         self._name_walker = self.empty_instance(NameInjectionWalker)
+        self._module_name_walker = self.empty_instance(NameInjectionWalker)
+
         self._base_class_walkers: List[ClassInjectionWalker] = []
         self._attribute_walkers: List[AttributeInjectionWalker] = []
         self._function_walkers: List[FunctionInjectionWalker] = []
@@ -51,6 +53,17 @@ class ClassInjectionWalker(AbstractInjectionWalker):
         self
     ) -> Iterator[AbstractInjectionWalker]:
         yield from self._walk_name()
+        if not self._name_walker.is_default:
+            if self._name_walker.value in self._engine.class_blacklist:
+                return
+
+            self._engine.class_blacklist.add(self._name_walker.value)
+
+        yield from self._walk_module_name()
+        if not self._module_name_walker.is_default:
+            if self._module_name_walker.value in self._engine.module_blacklist:
+                return
+
         yield from self._walk_doc()
         yield from self._walk_base_classes()
         yield from self._walk_dict()
@@ -81,8 +94,31 @@ class ClassInjectionWalker(AbstractInjectionWalker):
         yield from walker.walk()
 
         self._name_walker = walker
-        if not walker.is_default:
-            self._engine.class_blacklist.add(walker.value)
+
+    def _walk_module_name(
+        self
+    ) -> Iterator[AbstractInjectionWalker]:
+        """Recover the class's __module__ name."""
+        module_name_injection = f'{self._injection_str}.__module__!r'
+        result = self._harness.send_injection(module_name_injection)
+        if result is None:
+            yield FailedInjectionWalker.msg(
+                'Unable to inject __module__ name for class '
+                f'{self._name_walker.value} with injection '
+                f'{module_name_injection}')
+            return
+
+        walker = self.next_walker(module_name_injection, result)
+        if not isinstance(walker, NameInjectionWalker):
+            yield FailedInjectionWalker.msg(
+                'Expected a name injection walker response when injecting '
+                f'__module__ of class {self._name_walker.value} with '
+                f'injection {module_name_injection} but got instance of '
+                f'{walker.__class__.__qualname__} instead')
+            return
+
+        yield from walker.walk()
+        self._module_name_walker = walker
 
     def _walk_doc(
         self
@@ -168,7 +204,13 @@ class ClassInjectionWalker(AbstractInjectionWalker):
         """Walk the class's attrs, funcs, and other fields via __dict__."""
         key_blacklist: Set[str] = set(self._engine.attribute_blacklist)
         # below fields are visited manually
-        key_blacklist |= {'__name__', '__doc__', '__bases__', '__dict__'}
+        key_blacklist |= {
+            '__name__',
+            '__doc__',
+            '__bases__',
+            '__dict__',
+            '__module__',
+        }
 
         dict_injection = f'{self._injection_str}.__dict__'
         result = self._harness.send_injection(dict_injection)
@@ -214,7 +256,7 @@ class ClassInjectionWalker(AbstractInjectionWalker):
     def _gen_src_code(
         self
     ) -> None:
-        """Populate this class's :data:`src_code` attribute."""
+        """Populate this class's :data:`src_code` property."""
         cls_name = self._name_walker.value
 
         self._src_code = 'class '
@@ -295,6 +337,13 @@ class ClassInjectionWalker(AbstractInjectionWalker):
     ) -> NameInjectionWalker:
         """The walker used to recover the injected class's __name__."""
         return self._name_walker
+
+    @property
+    def module_name_walker(
+        self
+    ) -> NameInjectionWalker:
+        """The walker used to recover the injected class's __module__."""
+        return self._module_name_walker
 
     @property
     def base_class_walkers(

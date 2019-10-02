@@ -21,8 +21,6 @@ class CodeObjectFieldInjectionWalker(AbstractInjectionWalker):
     INJECTION_RE = None
     RESPONSE_RE = None
 
-    # TODO: remove value from __init__ and init in __extra_init__
-
     def __init__(
         self,
         harness: AbstractInjectionHarness,

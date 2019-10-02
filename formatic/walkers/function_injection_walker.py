@@ -26,8 +26,6 @@ class FunctionInjectionWalker(AbstractInjectionWalker):
 
     """
 
-    # TODO: how are decorators handled?
-
     INJECTION_RE = None
     RESPONSE_RE = r'<function .+ at 0x[0-9a-fA-F]+>'
 
@@ -102,9 +100,10 @@ class FunctionInjectionWalker(AbstractInjectionWalker):
         indented_src_lines = [f'   {line}' for line in src_lines]
         # TODO: need to get __doc__
         # TODO: need to get __name__
+        # TODO: need to get __module__ if top-level function
         self._signature = self.__class__.code_obj_to_signature(
             walker.code_obj)
-        self._src_code = f'def {self._signature}:\n'
+        self._src_code = f'{self._signature}\n'
         self._src_code += '\n'.join(indented_src_lines)
 
         yield self
@@ -119,9 +118,15 @@ class FunctionInjectionWalker(AbstractInjectionWalker):
             https://stackoverflow.com/a/56761306/5094008
 
         """
-        func = FunctionType(code_obj, {})
-        arg_sequence = inspect_signature(func)
-        return f'{code_obj.co_name}{arg_sequence}'
+        try:
+            func = FunctionType(code_obj, {})
+            arg_sequence = inspect_signature(func)
+            return f'def {code_obj.co_name}{arg_sequence}:'
+        except TypeError:
+            # build our own signature
+            return f"""\
+# exact argument names could not be reversed for below signature
+def {code_obj.co_name}(*args, **kwargs):"""
 
     def __str__(
         self

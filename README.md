@@ -54,6 +54,15 @@ formatic -vv -- curl -g http://localhost:8888/inject/@@
 
 `formatic` is intended for educational purposes and events such as CTFs only and should never be run on machines and/or networks without explicit prior consent. This code is released under the [MIT license](https://opensource.org/licenses/MIT).
 
+## Known Issues
+
+This tool is far from perfect and is currently in a proof-of-concept stage. You may experience the following shortcomings if you choose to use it:
+
+* No handling for Python 2 `func_closure` and Python 3 `__closure__` function attributes; you will likely experience this when trying to decompile code involving `super(SuperClass, self).__init__()` calls
+* No decompilation of list comprehensions that are passed within a function's `__code__.co_constants` tuple
+* No recovery of values for complex (i.e., non `str` or `int` literals) class-level attributes
+* Functions decorated with `@classmethod` are not retrieved nor reported in decompiled source
+
 ## Development
 
 The following linting should be performed on any committed code:

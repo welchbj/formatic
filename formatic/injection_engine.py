@@ -2,17 +2,20 @@
 
 from typing import (
     Iterator,
+    List,
     Optional,
     Set)
 
 from .defaults import (
     DEFAULT_ATTRIBUTE_BLACKLIST,
-    DEFAULT_CLASS_BLACKLIST)
+    DEFAULT_CLASS_BLACKLIST,
+    DEFAULT_MODULE_BLACKLIST)
 from .harnesses import (
     AbstractInjectionHarness)
 from .walkers import (
     AbstractInjectionWalker,
-    FailedInjectionWalker)
+    FailedInjectionWalker,
+    ModuleInjectionWalker)
 
 
 class InjectionEngine:
@@ -22,20 +25,15 @@ class InjectionEngine:
         self,
         harness: AbstractInjectionHarness,
         attribute_blacklist: Set[str] = DEFAULT_ATTRIBUTE_BLACKLIST,
-        class_blacklist: Set[str] = DEFAULT_CLASS_BLACKLIST
+        class_blacklist: Set[str] = DEFAULT_CLASS_BLACKLIST,
+        module_blacklist: Set[str] = DEFAULT_MODULE_BLACKLIST
     ) -> None:
         self._harness = harness
-        self._attribute_blacklist = set(attribute_blacklist)
-        self._class_blacklist = set(class_blacklist)
+        self._attribute_blacklist: Set[str] = set(attribute_blacklist)
+        self._class_blacklist: Set[str] = set(class_blacklist)
+        self._module_blacklist: Set[str] = set(module_blacklist)
 
-        # TODO: other blacklists (modules, etc.)
-
-        # TODO: if we are going with modules and classes, we should probably
-        #       just do everything
-        self._visited_module_names: Set[str] = set()
-        # TODO: should we record the below, or is it something that we should
-        #       recursively pull from modules?
-        self._visited_class_names: Set[str] = set()
+        self._visited_module_walkers: List[AbstractInjectionWalker] = []
 
     def run(
         self,
@@ -67,9 +65,10 @@ class InjectionEngine:
         walker = walker_cls(
             self._harness, format_str, response, bytecode_version, self)
 
-        for walk_result in walker.walk():
-            # TODO: record results
-            yield walk_result
+        for walker in walker.walk():
+            if isinstance(walker, ModuleInjectionWalker):
+                self._visited_module_walkers.append(walker)
+            yield walker
 
     @property
     def harness(
@@ -93,18 +92,18 @@ class InjectionEngine:
         return self._class_blacklist
 
     @property
-    def visited_module_names(
+    def module_blacklist(
         self
     ) -> Set[str]:
-        """A list of the names of visited modules."""
-        return self._visited_module_names
+        """Module names that will not be followed."""
+        return self._module_blacklist
 
     @property
-    def visited_class_names(
+    def visited_module_walkers(
         self
-    ) -> Set[str]:
-        """A list of the names of visited classes."""
-        return self._visited_class_names
+    ) -> Set[AbstractInjectionWalker]:
+        """A list of walkers that visited modules."""
+        return self._visited_module_walkers
 
     def __str__(
         self

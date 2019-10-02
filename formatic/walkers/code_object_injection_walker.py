@@ -83,7 +83,6 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
         """The underlying code object (if recovered)."""
         return self._code_obj
 
-    # TODO: we need to refactor usages of this into FailedInjectionWalker
     def assert_populated(
         self
     ) -> None:
@@ -99,9 +98,6 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
     def walk(
         self
     ) -> Iterator[AbstractInjectionWalker]:
-        # TODO: we are not current yielding self from within the code field
-        #       walk() impl; let's look into refactoring that
-
         try:
             co_argcount_inj_walker = self._read_co_argcount()
             yield co_argcount_inj_walker

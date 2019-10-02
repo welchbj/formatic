@@ -3,7 +3,8 @@
 import ast
 
 from typing import (
-    Iterator)
+    Iterator,
+    Optional)
 
 from .abstract_injection_walker import (
     AbstractInjectionWalker)
@@ -25,6 +26,7 @@ class AttributeInjectionWalker(AbstractInjectionWalker):
         super().__extra_init__()
 
         self._value: str = DEFAULT_UNKNOWN_ATTRIBUTE_VALUE
+        self._src_code: Optional[str] = None
 
     @property
     def value(
@@ -40,11 +42,20 @@ class AttributeInjectionWalker(AbstractInjectionWalker):
         """The name of the attribute."""
         return self._injection_str.split('.')[-1]
 
+    @property
+    def src_code(
+        self
+    ) -> Optional[str]:
+        """The source code used to define this attribute."""
+        return self._src_code
+
     def walk(
         self
     ) -> Iterator[AbstractInjectionWalker]:
         try:
             self._value = ast.literal_eval(self._raw_result)
+            attr_name = self._injection_str.split('.')[-1]
+            self._src_code = f'{attr_name} = {repr(self._value)}'
             yield self
         except (ValueError, SyntaxError):
             yield FailedInjectionWalker.msg(

@@ -18,5 +18,3 @@ from .module_injection_walker import (  # noqa
     ModuleInjectionWalker)
 from .name_injection_walker import (  # noqa
     NameInjectionWalker)
-from .slot_wrapper_injection_walker import ( # noqa
-    SlotWrapperInjectionWalker)

@@ -11,5 +11,4 @@ from .walkers import (  # noqa
     FailedInjectionWalker,
     FunctionInjectionWalker,
     ModuleInjectionWalker,
-    NameInjectionWalker,
-    SlotWrapperInjectionWalker)
+    NameInjectionWalker)

@@ -2,7 +2,7 @@
   <img width="345" height="80" src="static/logo.png" alt="formatic">
 </p>
 <p align="center">
-  <em>automated traversal of format() strings</em>
+   :key: <em>automated traversal of Python format() strings</em> :snake:
 </p>
 
 <p align="center">

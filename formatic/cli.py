@@ -85,7 +85,7 @@ def get_parsed_args(
         '-v', '--verbosity',
         action='count',
         default=0,
-        help='print verbose information (-vv prints more detail than -v)')
+        help='print verbose information')
 
     parser.add_argument(
         '--version',
@@ -127,7 +127,7 @@ def get_parsed_args(
              'will be used to extract results from injected payload responses')
 
     parser.add_argument(
-        '-b', '--bytecode_version',
+        '-b', '--bytecode-version',
         action='store',
         default='3.7',
         choices=sorted(supported_bytecode_versions),
@@ -168,18 +168,16 @@ def main(
                 else:
                     print_info(walker)
 
-            if opts.verbosity >= 2:
-                if (isinstance(walker, ClassInjectionWalker) and
-                        walker.src_code is not None):
-                    print_info('Recovered class source code:')
-                    print_py_src(walker.src_code)
-                elif (isinstance(walker, FunctionInjectionWalker) and
-                        walker.src_code is not None):
-                    print_info('Recovered function source code:')
-                    print_py_src(walker.src_code)
+            if (isinstance(walker, ClassInjectionWalker) and
+                    walker.src_code is not None):
+                print_info('Recovered class source code:')
+                print_py_src(walker.src_code)
+            elif (isinstance(walker, FunctionInjectionWalker) and
+                    walker.src_code is not None):
+                print_info('Recovered function source code:')
+                print_py_src(walker.src_code)
 
-        print_info('Completed execution; see below for data dump')
-        print(injection_engine)
+        print_info('Completed execution!')
     except ValueError as e:
         print_err(e)
         return 1

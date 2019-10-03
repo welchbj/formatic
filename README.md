@@ -37,7 +37,7 @@ pip install -r dev-requirements.txt
 
 This repository contains a couple of applications that are vulnerable to `format()` string injections. To inject into a vulnerable local command-line program, try:
 ```bash
-formatic -vv -- python demo/vulnerable_cli_app.py --inject @@
+formatic -v -- python demo/vulnerable_cli_app.py --inject @@
 ```
 
 To inject into a vulnerable local web server, first run the server with:
@@ -47,7 +47,7 @@ python demo/vulnerable_web_app.py 8888
 
 And then run `formatic` against it:
 ```bash
-formatic -vv -- curl -g http://localhost:8888/inject/@@
+formatic -v -- curl -g http://localhost:8888/inject/@@
 ```
 
 ## License

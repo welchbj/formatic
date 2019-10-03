@@ -115,12 +115,6 @@ class InjectionEngine:
         """A list of walkers that visited modules."""
         return self._visited_module_walkers
 
-    def __str__(
-        self
-    ) -> str:
-        # TODO
-        return 'TODO'
-
     def __repr__(
         self
     ) -> str:

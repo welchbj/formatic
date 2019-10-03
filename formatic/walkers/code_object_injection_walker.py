@@ -64,7 +64,7 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
     def __extra_init__(
         self
     ) -> None:
-        return super().__extra_init__()
+        super().__extra_init__()
 
         self._src_code: Optional[str] = None
         self._code_obj: Optional[CodeType] = None
@@ -153,6 +153,7 @@ class CodeObjectInjectionWalker(AbstractInjectionWalker):
             yield co_cellvars_inj_walker
         except ValueError as e:
             yield FailedInjectionWalker.msg(str(e))
+            return
 
         self._code_obj = CodeType(
             co_argcount_inj_walker.value,

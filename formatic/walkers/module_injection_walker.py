@@ -113,6 +113,9 @@ class ModuleInjectionWalker(AbstractInjectionWalker):
         if not self._name_walker.is_default:
             self._engine.module_blacklist.add(self._name_walker.value)
 
+        self._gen_src_code()
+        yield self
+
     def _walk_name(
         self
     ) -> Iterator[AbstractInjectionWalker]:
@@ -141,6 +144,7 @@ class ModuleInjectionWalker(AbstractInjectionWalker):
     ) -> Iterator[AbstractInjectionWalker]:
         """Recover this module's __doc__ attribute."""
         docstring_injection = f'{self._injection_str}[__doc__]!r'
+        print(docstring_injection)
         result = self._harness.send_injection(docstring_injection)
         if result is None:
             yield FailedInjectionWalker.msg(
@@ -166,22 +170,20 @@ class ModuleInjectionWalker(AbstractInjectionWalker):
     ) -> None:
         """Populate this class's :data:`src_code` property."""
         self._src_code = ''
-        if not self._docstring_walker.is_default:
+        if self._docstring_walker.value:
             self._src_code = f'"""{self._docstring_walker.value}"""\n\n'
-
-        self._src_code += '<OMITTED IMPORTS>\n\n\n'
 
         self._src_code += '\n'.join(
             [attr_walker.src_code for attr_walker in self._attribute_walkers
              if attr_walker.src_code is not None])
 
-        self._src_code += '\n'
+        self._src_code += '\n\n'
 
         self._src_code += '\n\n\n'.join(
             [func_walker.src_code for func_walker in self._function_walkers
              if func_walker.src_code is not None])
 
-        self._src_code += '\n'
+        self._src_code += '\n\n'
 
         self._src_code += '\n\n\n'.join(
             [class_walker.src_code for class_walker in self._class_walkers
@@ -221,3 +223,15 @@ class ModuleInjectionWalker(AbstractInjectionWalker):
     ) -> List[AttributeInjectionWalker]:
         """Attribute walkers spawned from this module's enumeration."""
         return self._attribute_walkers
+
+    @property
+    def src_code(
+        self
+    ) -> Optional[str]:
+        """The module's decompiled source code."""
+        return self._src_code
+
+    def __str__(
+        self
+    ) -> str:
+        return f'Injected module with string {self._injection_str}'

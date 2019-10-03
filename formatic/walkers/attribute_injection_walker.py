@@ -54,7 +54,15 @@ class AttributeInjectionWalker(AbstractInjectionWalker):
     ) -> Iterator[AbstractInjectionWalker]:
         try:
             self._value = ast.literal_eval(self._raw_result)
+
             attr_name = self._injection_str.split('.')[-1]
+            if attr_name.startswith('__globals__['):
+                attr_name = attr_name[12:]
+            if attr_name.endswith('!r'):
+                attr_name = attr_name[:-2]
+            if attr_name.endswith(']'):
+                attr_name = attr_name[:-1]
+
             self._src_code = f'{attr_name} = {repr(self._value)}'
             yield self
         except (ValueError, SyntaxError):

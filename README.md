@@ -1,6 +1,24 @@
 <p align="center">
   <img width="345" height="80" src="static/logo.png" alt="formatic">
 </p>
+<p align="center">
+  <em>automated traversal of format() strings</em>
+</p>
+
+<p align="center">
+  <a href="https://pypi.org/project/formatic/">
+    <img src="https://img.shields.io/pypi/v/formatic.svg?style=flat-square&label=pypi" alt="pypi">
+  </a>
+  <a href="https://www.python.org/">
+    <img src="https://img.shields.io/badge/python-3.7+-b042f4.svg?style=flat-square" alt="python version">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://asciinema.org/a/272193?autoplay=1">
+    <img src="https://asciinema.org/a/272193.png" width="750"/>
+  </a>
+</p>
 
 ---
 
